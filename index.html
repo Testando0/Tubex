@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YouTube Premium - Home</title>
+    <title>YouTube Premium - Histórico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -11,63 +11,63 @@
         body { background-color: #0f0f0f; color: white; -webkit-tap-highlight-color: transparent; }
         .yt-red { color: #ff0000; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        
-        /* Chips de Categoria */
-        .chip { padding: 6px 12px; background: #272727; border-radius: 8px; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: 0.2s; }
-        .chip:hover { background: #3f3f3f; }
+        .chip { padding: 6px 12px; background: #272727; border-radius: 8px; font-size: 14px; white-space: nowrap; cursor: pointer; transition: 0.2s; }
         .chip.active { background: white; color: black; }
-
-        #playerContainer { transition: all 0.3s ease-in-out; z-index: 4000; }
+        #playerContainer { transition: all 0.3s ease; z-index: 5000; }
         .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
         .mini-player { position: fixed !important; bottom: 10px; right: 10px; width: 320px !important; height: 180px !important; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #333; overflow: hidden; }
-
         @media (max-width: 640px) {
             .mini-player { bottom: 0; right: 0; width: 100% !important; height: 80px !important; border-radius: 0; display: flex; background: #212121; }
-            .mini-player #ytPlayer { width: 140px !important; pointer-events: none; }
+            .mini-player #ytPlayer { width: 140px !important; }
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <nav class="fixed top-0 w-full bg-[#0f0f0f] z-[3000] flex items-center justify-between px-3 h-14 border-b border-zinc-800 shadow-lg">
-        <div class="flex items-center gap-4">
-            <i class="fa-solid fa-bars text-lg p-2 cursor-pointer"></i>
-            <div class="flex items-center gap-1 cursor-pointer" onclick="location.reload()">
-                <i class="fa-brands fa-youtube text-2xl yt-red"></i>
-                <span class="text-lg font-bold tracking-tighter">YouTube</span>
-            </div>
+    <nav class="fixed top-0 w-full bg-[#0f0f0f] z-[3000] flex items-center justify-between px-4 h-14 border-b border-zinc-800">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
+            <i class="fa-brands fa-youtube text-3xl yt-red"></i>
+            <span class="text-xl font-bold tracking-tighter italic">YouTube</span>
         </div>
 
-        <div class="flex-1 max-w-[500px] mx-2">
+        <div class="flex-1 max-w-[500px] mx-4">
             <div class="flex bg-zinc-900 border border-zinc-800 rounded-full items-center px-4 py-1.5 focus-within:border-blue-500">
-                <input id="searchInput" type="text" placeholder="Pesquisar" class="bg-transparent w-full outline-none text-sm text-white">
+                <input id="searchInput" type="text" placeholder="Pesquisar" class="bg-transparent w-full outline-none text-sm">
                 <button id="searchBtn" class="ml-2 text-zinc-400"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
         </div>
-        <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center font-bold text-xs uppercase">H</div>
+        <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center font-bold text-xs">U</div>
     </nav>
 
-    <div class="fixed top-14 w-full bg-[#0f0f0f] z-[2000] px-4 py-3 flex gap-3 overflow-x-auto no-scrollbar border-b border-zinc-900">
-        <div class="chip active" onclick="filtro('Tudo', this)">Tudo</div>
-        <div class="chip" onclick="filtro('Música Lo-fi', this)">Música</div>
-        <div class="chip" onclick="filtro('Jogos Lançamentos', this)">Jogos</div>
-        <div class="chip" onclick="filtro('Podcast', this)">Podcasts</div>
-        <div class="chip" onclick="filtro('Tecnologia', this)">Tecnologia</div>
-        <div class="chip" onclick="filtro('Trailers 2025', this)">Filmes</div>
+    <div class="fixed top-14 w-full bg-[#0f0f0f] z-[2000] px-4 py-3 flex gap-3 overflow-x-auto border-b border-zinc-900">
+        <div class="chip active" onclick="filtro('Destaques', this)">Tudo</div>
+        <div class="chip" onclick="filtro('Música', this)">Música</div>
+        <div class="chip" onclick="filtro('Gameplay', this)">Jogos</div>
+        <div class="chip" onclick="filtro('Podcasts', this)">Podcasts</div>
+        <button onclick="clearHistory()" class="ml-auto text-xs text-zinc-500 hover:text-red-500">Limpar Histórico</button>
     </div>
 
     <main class="pt-32 pb-24 p-4 lg:p-10 max-w-[1800px] mx-auto">
-        <h2 id="homeTitle" class="text-xl font-bold mb-6">Recomendações</h2>
-        <div id="loader" class="mx-auto w-8 h-8 border-4 border-zinc-700 border-t-red-600 rounded-full animate-spin my-10 hidden"></div>
-        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-10">
-            </div>
+        
+        <div id="historySection" class="hidden mb-12">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-zinc-400"></i> Assistidos Recentemente
+            </h2>
+            <div id="historyGrid" class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                </div>
+            <hr class="border-zinc-800 mt-6">
+        </div>
+
+        <h2 id="sectionTitle" class="text-lg font-bold mb-6">Recomendações</h2>
+        <div id="loader" class="hidden mx-auto w-8 h-8 border-4 border-zinc-700 border-t-red-600 rounded-full animate-spin my-10"></div>
+        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-10"></div>
     </main>
 
     <div id="playerWrapper" class="hidden">
         <div id="playerContainer" class="full-player">
-            <div class="absolute top-2 right-2 z-[5000] flex gap-2">
-                <button onclick="togglePlayerMode()" class="bg-black/50 backdrop-blur-md p-3 rounded-full text-white"><i class="fa-solid fa-compress"></i></button>
-                <button onclick="closePlayer()" class="bg-black/50 backdrop-blur-md p-3 rounded-full text-white"><i class="fa-solid fa-xmark"></i></button>
+            <div class="absolute top-2 right-2 z-[6000] flex gap-2">
+                <button onclick="togglePlayerMode()" class="bg-black/60 p-3 rounded-full"><i class="fa-solid fa-compress"></i></button>
+                <button onclick="closePlayer()" class="bg-black/60 p-3 rounded-full"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="ytPlayer"></div>
         </div>
@@ -75,97 +75,114 @@
 
     <script>
         let player;
-        let videoList = [];
-        let isMini = false;
+        let videoPool = [];
+        let history = JSON.parse(localStorage.getItem('yt_history')) || [];
 
         function onYouTubeIframeAPIReady() {
-            // Quando a API carregar, fazemos a busca inicial
-            realizarPesquisa("Destaques de hoje");
+            renderHistory();
+            realizarPesquisa("Destaques");
         }
 
         async function realizarPesquisa(query) {
-            const grid = document.getElementById('videoGrid');
             const loader = document.getElementById('loader');
-            
+            const grid = document.getElementById('videoGrid');
             loader.classList.remove('hidden');
-            if(query !== "Destaques de hoje") grid.innerHTML = ""; // Limpa se for pesquisa manual
-            
+            if(query !== "Destaques") grid.innerHTML = "";
+
             try {
                 const api = `https://kuromi-system-tech.onrender.com/api/pesquisayt?query=${encodeURIComponent(query)}`;
                 const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(api)}`);
                 const data = await response.json();
 
                 data.formattedVideos.forEach(v => {
-                    const videoId = v.link.split('v=')[1];
-                    if(!videoList.includes(videoId)) videoList.push(videoId);
-
-                    const card = `
-                        <div class="video-card cursor-pointer group" onclick="openPlayer('${videoId}')">
-                            <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-800 mb-3">
-                                <img src="${v.thumbnail}" class="w-full h-full object-cover transition duration-300 group-hover:scale-105">
-                                <span class="absolute bottom-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-bold">${v.duration}</span>
-                            </div>
-                            <div class="flex gap-3">
-                                <div class="w-9 h-9 bg-zinc-800 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs">YT</div>
-                                <div>
-                                    <h3 class="font-bold text-sm leading-tight line-clamp-2">${v.title}</h3>
-                                    <p class="text-zinc-400 text-xs mt-1">${v.channel}</p>
-                                    <p class="text-zinc-500 text-[11px]">${v.views.toLocaleString()} views</p>
-                                </div>
-                            </div>
-                        </div>`;
-                    grid.insertAdjacentHTML('beforeend', card);
+                    const id = v.link.split('v=')[1];
+                    if(!videoPool.includes(id)) videoPool.push(id);
+                    grid.insertAdjacentHTML('beforeend', createCard(v, id, 'grid'));
                 });
-            } catch (e) { console.error("Erro na Home:", e); }
+            } catch (e) { console.error(e); }
             finally { loader.classList.add('hidden'); }
         }
 
-        // Sistema de Chips
-        function filtro(termo, el) {
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('homeTitle').innerText = termo;
-            videoList = []; // Reseta pool de autoplay para o novo tema
-            realizarPesquisa(termo);
+        function createCard(v, id, type) {
+            const isHistory = type === 'history';
+            return `
+                <div class="${isHistory ? 'min-w-[200px] w-[200px]' : ''} cursor-pointer group" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
+                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-800 mb-2">
+                        <img src="${v.thumbnail}" class="w-full h-full object-cover">
+                        <span class="absolute bottom-1 right-1 bg-black/80 px-1 rounded text-[10px] font-bold">${v.duration || ''}</span>
+                    </div>
+                    <h3 class="font-bold text-xs line-clamp-2">${v.title}</h3>
+                    <p class="text-zinc-500 text-[10px] mt-1">${v.channel}</p>
+                </div>`;
         }
 
-        // Funções de Player (IFrame API)
+        function saveAndPlay(id, title, thumb, channel) {
+            // Salvar no histórico (evitando duplicatas)
+            history = history.filter(item => item.id !== id);
+            history.unshift({ id, title, thumbnail: thumb, channel });
+            if(history.length > 10) history.pop(); // Limite de 10 itens
+            localStorage.setItem('yt_history', JSON.stringify(history));
+            
+            renderHistory();
+            openPlayer(id);
+        }
+
+        function renderHistory() {
+            const section = document.getElementById('historySection');
+            const grid = document.getElementById('historyGrid');
+            if(history.length > 0) {
+                section.classList.remove('hidden');
+                grid.innerHTML = history.map(v => createCard(v, v.id, 'history')).join('');
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
+        function clearHistory() {
+            history = [];
+            localStorage.removeItem('yt_history');
+            renderHistory();
+        }
+
         function openPlayer(id) {
             document.getElementById('playerWrapper').classList.remove('hidden');
-            if (player) {
-                player.loadVideoById(id);
-            } else {
+            if (player) player.loadVideoById(id);
+            else {
                 player = new YT.Player('ytPlayer', {
                     height: '100%', width: '100%', videoId: id,
-                    playerVars: { 'autoplay': 1, 'rel': 0 },
+                    playerVars: { 'autoplay': 1 },
                     events: { 'onStateChange': (e) => e.data === YT.PlayerState.ENDED && playNext() }
                 });
             }
-            setFullMode();
+            document.getElementById('playerContainer').className = "full-player";
         }
 
         function playNext() {
-            const nextId = videoList[Math.floor(Math.random() * videoList.length)];
-            player.loadVideoById(nextId);
+            const next = videoPool[Math.floor(Math.random() * videoPool.length)];
+            player.loadVideoById(next);
         }
 
         function togglePlayerMode() {
-            isMini = !isMini;
-            document.getElementById('playerContainer').className = isMini ? "mini-player" : "full-player";
-            document.body.style.overflow = isMini ? 'auto' : 'hidden';
+            const container = document.getElementById('playerContainer');
+            const isMini = container.classList.contains('mini-player');
+            container.className = isMini ? "full-player" : "mini-player";
+            document.body.style.overflow = isMini ? 'hidden' : 'auto';
         }
 
-        function setFullMode() { isMini = false; document.getElementById('playerContainer').className = "full-player"; document.body.style.overflow = 'hidden'; }
-        function closePlayer() { player.stopVideo(); document.getElementById('playerWrapper').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        function closePlayer() {
+            player.stopVideo();
+            document.getElementById('playerWrapper').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
 
-        // Pesquisa Manual
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            const q = document.getElementById('searchInput').value;
-            realizarPesquisa(q);
-        });
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') realizarPesquisa(e.target.value);
-        });
+        function filtro(t, el) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            realizarPesquisa(t);
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', () => realizarPesquisa(document.getElementById('searchInput').value));
+        document.getElementById('searchInput').addEventListener('keypress', (e) => e.key === 'Enter' && realizarPesquisa(e.target.value));
     </script>
 </body>
 </html>
