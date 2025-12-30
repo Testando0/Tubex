@@ -3,174 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Clone Premium</title>
+    <title>YouTube Pro - Background Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #0f0f0f; color: white; scroll-behavior: smooth; }
+        body { background-color: #0f0f0f; color: white; overflow-x: hidden; }
         .yt-red { color: #ff0000; }
-        .video-card:hover .thumbnail { transform: scale(1.03); }
-        .video-card img { transition: transform 0.3s ease; }
+        .video-card:hover img { transform: scale(1.05); }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
-        /* Estilo para o Player em Tela Cheia (Overlay) */
-        #videoOverlay {
-            display: none;
+        /* Estilo do Player Flutuante (Segundo Plano no Site) */
+        #playerContainer {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        /* Classe para o modo Mini Player */
+        .mini-player {
+            position: fixed !important;
+            bottom: 20px;
+            right: 20px;
+            width: 320px !important;
+            height: 180px !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 2px solid #3f3f3f;
+            border-radius: 12px;
+        }
+
+        /* Overlay de Tela Cheia (Original) */
+        .full-player {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: black; z-index: 9999;
+            background: black;
         }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body class="antialiased">
 
-    <nav class="fixed top-0 w-full bg-[#0f0f0f] z-50 flex items-center justify-between px-4 h-14 border-b border-zinc-800">
+    <nav class="fixed top-0 w-full bg-[#0f0f0f] z-[1100] flex items-center justify-between px-4 h-14 border-b border-zinc-800">
         <div class="flex items-center gap-4">
-            <i class="fa-solid fa-bars text-xl p-2 cursor-pointer hover:bg-zinc-800 rounded-full"></i>
+            <i class="fa-solid fa-bars text-xl cursor-pointer"></i>
             <div class="flex items-center gap-1 cursor-pointer" onclick="location.reload()">
                 <i class="fa-brands fa-youtube text-3xl yt-red"></i>
-                <span class="text-xl font-bold tracking-tighter">YouTube</span>
+                <span class="text-xl font-bold tracking-tighter italic">Premium</span>
             </div>
         </div>
 
-        <div class="flex items-center flex-1 max-w-[720px] mx-10">
+        <div class="flex items-center flex-1 max-w-[600px] mx-4">
             <div class="flex w-full bg-zinc-900 border border-zinc-800 rounded-full items-center px-4 py-1.5 focus-within:border-blue-500 transition-all">
-                <input id="searchInput" type="text" placeholder="Pesquisar" class="bg-transparent w-full outline-none text-zinc-200">
+                <input id="searchInput" type="text" placeholder="Pesquisar..." class="bg-transparent w-full outline-none text-sm">
                 <button id="searchBtn" class="pl-4 text-zinc-400 hover:text-white border-l border-zinc-700 ml-2">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </div>
         </div>
 
-        <div class="flex items-center gap-4 px-2">
-            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center font-bold">R</div>
-        </div>
+        <div class="w-8 h-8 bg-gradient-to-tr from-red-600 to-purple-600 rounded-full flex items-center justify-center font-bold text-xs">U</div>
     </nav>
 
-    <aside class="hidden lg:block w-60 fixed left-0 pt-16 h-screen p-3 space-y-1">
-        <div class="flex items-center gap-5 p-3 rounded-xl bg-zinc-800 cursor-pointer">
-            <i class="fa-solid fa-house"></i> <span class="text-sm font-medium">Início</span>
-        </div>
-        <div class="flex items-center gap-5 p-3 rounded-xl hover:bg-zinc-800 cursor-pointer text-zinc-400">
-            <i class="fa-solid fa-bolt"></i> <span class="text-sm font-medium">Shorts</span>
-        </div>
-        <div class="flex items-center gap-5 p-3 rounded-xl hover:bg-zinc-800 cursor-pointer text-zinc-400 border-b border-zinc-800 pb-4">
-            <i class="fa-solid fa-clapperboard"></i> <span class="text-sm font-medium">Inscrições</span>
-        </div>
-    </aside>
-
-    <main class="lg:ml-60 pt-20 p-4 lg:p-8">
-        
+    <main class="pt-20 p-4 lg:p-10">
         <div id="loader" class="hidden text-center py-20">
-            <div class="inline-block w-10 h-10 border-4 border-zinc-700 border-t-red-600 rounded-full animate-spin"></div>
-            <p class="mt-4 text-zinc-400 animate-pulse">Buscando vídeos...</p>
+            <div class="inline-block w-8 h-8 border-4 border-zinc-700 border-t-red-600 rounded-full animate-spin"></div>
         </div>
 
-        <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-x-4 gap-y-10">
+        <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
             </div>
     </main>
 
-    <div id="videoOverlay">
-        <button onclick="closePlayer()" class="absolute top-4 right-4 z-[10000] bg-white/10 hover:bg-white/20 p-3 rounded-full text-white transition-all">
-            <i class="fa-solid fa-xmark text-2xl"></i>
-        </button>
-        <iframe id="fullPlayer" class="w-full h-full" src="" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <div id="playerWrapper" class="hidden">
+        <div id="playerContainer" class="full-player">
+            <div class="absolute top-2 right-2 z-[2000] flex gap-2">
+                <button id="toggleMode" onclick="togglePlayerMode()" class="bg-black/60 hover:bg-black/90 p-2 rounded-lg text-white text-xs">
+                    <i class="fa-solid fa-compress"></i> Mini
+                </button>
+                <button onclick="closePlayer()" class="bg-red-600/80 hover:bg-red-600 p-2 rounded-lg text-white text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <iframe id="videoIframe" class="w-full h-full" src="" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+        </div>
     </div>
 
     <script>
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
-        const loader = document.getElementById('loader');
         const grid = document.getElementById('videoGrid');
-        const overlay = document.getElementById('videoOverlay');
-        const fullPlayer = document.getElementById('fullPlayer');
+        const playerWrapper = document.getElementById('playerWrapper');
+        const playerContainer = document.getElementById('playerContainer');
+        const videoIframe = document.getElementById('videoIframe');
+        const toggleBtn = document.getElementById('toggleMode');
 
-        async function realizarBusca() {
+        let isMini = false;
+
+        async function buscar() {
             const query = searchInput.value.trim();
             if (!query) return;
 
+            document.getElementById('loader').classList.remove('hidden');
             grid.innerHTML = "";
-            loader.classList.remove('hidden');
 
             try {
-                // Nova API com Proxy para evitar CORS
-                const targetUrl = `https://kuromi-system-tech.onrender.com/api/pesquisayt?query=${encodeURIComponent(query)}`;
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-
-                const response = await fetch(proxyUrl);
+                const url = `https://kuromi-system-tech.onrender.com/api/pesquisayt?query=${encodeURIComponent(query)}`;
+                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
                 const data = await response.json();
 
-                if (data.formattedVideos && data.formattedVideos.length > 0) {
-                    data.formattedVideos.forEach(video => {
-                        renderizarVideo(video);
-                    });
-                } else {
-                    alert("Nenhum vídeo encontrado.");
-                }
-            } catch (error) {
-                console.error("Erro na API:", error);
-                alert("Erro ao conectar com o sistema de busca.");
-            } finally {
-                loader.classList.add('hidden');
-            }
+                data.formattedVideos.forEach(v => {
+                    const id = v.link.split('v=')[1];
+                    const card = `
+                        <div class="video-card cursor-pointer group" onclick="openPlayer('${id}')">
+                            <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-800 mb-3">
+                                <img src="${v.thumbnail}" class="w-full h-full object-cover transition-transform duration-300">
+                                <span class="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-bold">${v.duration}</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="w-9 h-9 bg-zinc-800 rounded-full flex-shrink-0"></div>
+                                <div>
+                                    <h3 class="font-bold text-sm leading-tight line-clamp-2">${v.title}</h3>
+                                    <p class="text-zinc-400 text-xs mt-1">${v.channel}</p>
+                                    <p class="text-zinc-500 text-[11px]">${v.views.toLocaleString()} views</p>
+                                </div>
+                            </div>
+                        </div>`;
+                    grid.insertAdjacentHTML('beforeend', card);
+                });
+            } catch (e) { alert("Erro ao carregar vídeos."); }
+            finally { document.getElementById('loader').classList.add('hidden'); }
         }
 
-        function renderizarVideo(video) {
-            // Extrair ID do link para o embed
-            const videoId = video.link.split('v=')[1];
-
-            const card = `
-                <div class="video-card cursor-pointer group" onclick="openPlayer('${videoId}')">
-                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-800 mb-3 thumbnail">
-                        <img src="${video.thumbnail}" class="w-full h-full object-cover">
-                        <span class="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-xs font-medium">
-                            ${video.duration}
-                        </span>
-                    </div>
-                    
-                    <div class="flex gap-3">
-                        <div class="w-9 h-9 bg-zinc-800 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs text-zinc-500">
-                            ${video.channel.charAt(0)}
-                        </div>
-                        <div class="flex flex-col">
-                            <h3 class="font-bold text-sm leading-tight line-clamp-2 group-hover:text-zinc-300">
-                                ${video.title}
-                            </h3>
-                            <p class="text-zinc-400 text-xs mt-1.5 hover:text-white transition-colors">
-                                ${video.channel}
-                            </p>
-                            <p class="text-zinc-400 text-[11px]">
-                                ${formatarViews(video.views)} • Há algum tempo
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            grid.insertAdjacentHTML('beforeend', card);
-        }
-
-        function formatarViews(num) {
-            if (num >= 1000000) return (num / 1000000).toFixed(1) + ' mi de visualizações';
-            if (num >= 1000) return (num / 1000).toFixed(0) + ' mil visualizações';
-            return num + ' visualizações';
-        }
-
-        // Funções do Player
         function openPlayer(id) {
-            fullPlayer.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-            overlay.style.display = 'block';
-            document.body.style.overflow = 'hidden'; // Impede scroll
+            videoIframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+            playerWrapper.classList.remove('hidden');
+            setFullMode();
+        }
+
+        function togglePlayerMode() {
+            if (isMini) setFullMode();
+            else setMiniMode();
+        }
+
+        function setMiniMode() {
+            isMini = true;
+            playerContainer.className = "mini-player";
+            toggleBtn.innerHTML = '<i class="fa-solid fa-expand"></i> Full';
+            document.body.style.overflow = 'auto'; // Permite scroll no site
+        }
+
+        function setFullMode() {
+            isMini = false;
+            playerContainer.className = "full-player";
+            toggleBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Mini';
+            document.body.style.overflow = 'hidden'; // Trava scroll para focar no vídeo
         }
 
         function closePlayer() {
-            fullPlayer.src = "";
-            overlay.style.display = 'none';
+            videoIframe.src = "";
+            playerWrapper.classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
 
-        // Eventos
-        searchBtn.addEventListener('click', realizarBusca);
-        searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') realizarBusca(); });
+        searchBtn.addEventListener('click', buscar);
+        searchInput.addEventListener('keypress', (e) => e.key === 'Enter' && buscar());
     </script>
 </body>
 </html>
