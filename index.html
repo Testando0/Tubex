@@ -3,89 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>REDPLAY - Scroll Infinito</title>
+    
+    <meta name="theme-color" content="#080808">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="REDPLAY">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/732/732257.png">
+    
+    <title>REDPLAY - Experience</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.youtube.com/iframe_api"></script>
+    
     <style>
-        body { background-color: #080808; color: white; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
-        .redplay-icon { background: #ff0000; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255,0,0,0.4); }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        body { background-color: #080808; color: white; -webkit-tap-highlight-color: transparent; overflow-x: hidden; font-family: 'Inter', sans-serif; }
+        
+        /* Ícone REDPLAY */
+        .redplay-logo { background: linear-gradient(135deg, #ff0000, #b30000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(255,0,0,0.3); }
+
+        /* Novo Perfil Premium (Substituindo a letra R) */
+        .user-profile {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: url('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix') center/cover;
+            border: 2px solid #ff0000;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,0,0,0.2);
+        }
+        .user-profile::after {
+            content: ''; position: absolute; inset: -3px;
+            border: 2px solid #ff0000; border-radius: 50%;
+            animation: pulse 2s infinite; opacity: 0;
+        }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.4); opacity: 0; } }
+
+        /* Estilos do Feed */
+        .video-grid { display: grid; gap: 1.5rem 1rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        .video-grid {
-            display: grid;
-            gap: 1.5rem 1rem;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        }
-
-        #playerContainer { transition: all 0.3s ease; z-index: 5000; }
+        /* Player e Controles */
+        #playerContainer { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5000; }
         .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
-        .mini-player { position: fixed !important; bottom: 20px; left: 20px; width: 320px !important; height: 180px !important; border-radius: 12px; border: 2px solid #ff0000; overflow: hidden; }
-        .player-controls { position: absolute; top: 15px; left: 15px; z-index: 6000; display: flex; gap: 10px; }
+        .mini-player { position: fixed !important; bottom: 25px; left: 20px; width: 340px !important; height: 190px !important; border-radius: 16px; border: 2px solid #ff0000; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.9); }
+        .player-controls { position: absolute; top: 20px; left: 20px; z-index: 6000; display: flex; gap: 12px; }
         
         @media (max-width: 640px) {
-            .mini-player { bottom: 0; left: 0; width: 100% !important; height: 90px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
+            .mini-player { bottom: 0; left: 0; width: 100% !important; height: 100px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <nav class="fixed top-0 w-full bg-[#080808]/95 backdrop-blur-md z-[3000] flex items-center justify-between px-4 h-16 border-b border-zinc-800">
+    <nav class="fixed top-0 w-full bg-[#080808]/90 backdrop-blur-xl z-[3000] flex items-center justify-between px-5 h-16 border-b border-zinc-900">
         <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
-            <div class="redplay-icon"><i class="fa-solid fa-play text-white text-xs"></i></div>
-            <span class="text-xl font-black tracking-tight">REDPLAY</span>
+            <div class="redplay-logo"><i class="fa-solid fa-play text-white text-sm"></i></div>
+            <span class="text-xl font-black tracking-tighter uppercase">RedPlay</span>
         </div>
-        <div class="flex-1 max-w-[500px] mx-4">
-            <div class="flex bg-zinc-900/50 border border-zinc-700 rounded-lg items-center px-4 py-2 focus-within:border-red-600 transition-all">
-                <input id="searchInput" type="text" placeholder="Pesquisar..." class="bg-transparent w-full outline-none text-sm">
-                <button id="searchBtn" class="ml-2 text-zinc-400 hover:text-red-500"><i class="fa-solid fa-magnifying-glass"></i></button>
+        
+        <div class="flex-1 max-w-[400px] mx-4 hidden sm:block">
+            <div class="flex bg-zinc-900/80 border border-zinc-800 rounded-full px-4 py-2 focus-within:border-red-600 transition-all">
+                <input id="searchInput" type="text" placeholder="Buscar no app..." class="bg-transparent w-full outline-none text-sm">
+                <i class="fa-solid fa-magnifying-glass text-zinc-500 text-sm"></i>
             </div>
         </div>
-        <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center font-bold text-xs uppercase">R</div>
+
+        <div class="flex items-center gap-4">
+            <i class="fa-solid fa-magnifying-glass sm:hidden text-lg"></i>
+            <div class="user-profile"></div>
+        </div>
     </nav>
 
-    <main class="pt-24 pb-24 p-4 lg:p-8 max-w-[2200px] mx-auto">
+    <main class="pt-24 pb-24 p-4 lg:p-8 max-w-[2400px] mx-auto">
         <div id="historySection" class="hidden mb-12">
-            <h2 class="text-sm font-bold tracking-widest text-zinc-500 mb-4 uppercase">Continuar assistindo</h2>
+            <h2 class="text-xs font-bold tracking-widest text-red-500 mb-4 uppercase flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-red-600 rounded-full animate-ping"></span> Continuar assistindo
+            </h2>
             <div id="historyGrid" class="flex gap-4 overflow-x-auto pb-4 no-scrollbar"></div>
         </div>
 
         <div id="videoGrid" class="video-grid"></div>
 
-        <div id="loaderScroll" class="py-10 text-center">
+        <div id="loaderScroll" class="py-20 text-center opacity-0 transition-opacity">
             <div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div>
-            <p class="text-xs text-zinc-500 mt-2">Carregando mais conteúdo...</p>
         </div>
     </main>
 
     <div id="playerWrapper" class="hidden">
         <div id="playerContainer" class="full-player">
             <div class="player-controls">
-                <button onclick="closePlayer()" class="w-10 h-10 bg-black/80 rounded-full flex items-center justify-center text-red-500"><i class="fa-solid fa-xmark"></i></button>
-                <button onclick="togglePlayerMode()" class="w-10 h-10 bg-black/80 rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-compress"></i></button>
+                <button onclick="closePlayer()" class="w-12 h-12 bg-black/70 backdrop-blur-md rounded-full flex items-center justify-center text-red-500 border border-white/10"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="togglePlayerMode()" class="w-12 h-12 bg-black/70 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/10"><i class="fa-solid fa-compress"></i></button>
             </div>
             <div id="ytPlayer"></div>
         </div>
     </div>
 
     <script>
+        // Lógica PWA: Registra um Service Worker fictício para habilitar instalação
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => { /* Apenas para simular PWA */ });
+            });
+        }
+
         let player;
         let videoPool = [];
         let history = JSON.parse(localStorage.getItem('rp_history')) || [];
         let isLoading = false;
-        const temasIniciais = ["Música 2025", "Tecnologia", "Funny Cats", "Podcast Brasil", "Gaming 4K", "Cinema Trailers", "Ciência", "Esportes"];
+        const temas = ["New Music 2025", "Cinematic 4K", "Tech Reviews", "Live Concerts", "Gaming Highlights", "Nature 8K"];
 
         function onYouTubeIframeAPIReady() {
             renderHistory();
-            carregarIniciais();
+            initFeed();
         }
 
-        async function carregarIniciais() {
-            // Carrega 3 categorias aleatórias de cara
-            for(let i=0; i<3; i++) {
-                await realizarPesquisa(temasIniciais[Math.floor(Math.random() * temasIniciais.length)], false);
-            }
+        async function initFeed() {
+            for(let t of temas.slice(0,3)) await realizarPesquisa(t, false);
         }
 
         async function realizarPesquisa(query, limpar = true) {
@@ -93,7 +128,6 @@
             isLoading = true;
             const grid = document.getElementById('videoGrid');
             const loader = document.getElementById('loaderScroll');
-            
             if(limpar) { grid.innerHTML = ""; videoPool = []; window.scrollTo(0,0); }
             loader.style.opacity = "1";
 
@@ -102,50 +136,42 @@
                 const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(api)}`);
                 const data = await response.json();
 
-                if(data.formattedVideos) {
-                    data.formattedVideos.forEach(v => {
-                        const id = v.link.split('v=')[1];
-                        if(!videoPool.includes(id)) {
-                            videoPool.push(id);
-                            grid.insertAdjacentHTML('beforeend', `
-                                <div class="cursor-pointer group animate-in fade-in duration-700" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
-                                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800/50">
-                                        <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" loading="lazy">
-                                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-black text-red-600">${v.duration}</span>
-                                    </div>
-                                    <div class="flex gap-3 px-1">
-                                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-zinc-500">${v.channel[0]}</div>
-                                        <div>
-                                            <h3 class="font-bold text-sm line-clamp-2 leading-tight group-hover:text-red-500 transition">${v.title}</h3>
-                                            <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
-                                        </div>
+                data.formattedVideos.forEach(v => {
+                    const id = v.link.split('v=')[1];
+                    if(!videoPool.includes(id)) {
+                        videoPool.push(id);
+                        grid.insertAdjacentHTML('beforeend', `
+                            <div class="cursor-pointer group animate-in zoom-in duration-500" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
+                                <div class="relative aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-lg group-hover:border-red-600/50 transition-all">
+                                    <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" loading="lazy">
+                                    <span class="absolute bottom-3 right-3 bg-black/90 px-2 py-0.5 rounded text-[10px] font-black text-red-500 border border-red-500/20">${v.duration}</span>
+                                </div>
+                                <div class="mt-3 flex gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-tr from-zinc-800 to-zinc-700 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-zinc-400">${v.channel[0]}</div>
+                                    <div>
+                                        <h3 class="font-bold text-sm line-clamp-2 leading-snug group-hover:text-red-500 transition">${v.title}</h3>
+                                        <p class="text-zinc-500 text-xs mt-1 font-medium">${v.channel}</p>
                                     </div>
                                 </div>
-                            `);
-                        }
-                    });
-                }
+                            </div>
+                        `);
+                    }
+                });
             } catch (e) { console.error(e); }
-            finally { 
-                isLoading = false; 
-                loader.style.opacity = "0";
-            }
+            finally { isLoading = false; loader.style.opacity = "0"; }
         }
 
-        // DETECTOR DE SCROLL INFINITO
+        // SCROLL INFINITO
         window.addEventListener('scroll', () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
-                if(!isLoading) {
-                    const temaAleatorio = temasIniciais[Math.floor(Math.random() * temasIniciais.length)];
-                    realizarPesquisa(temaAleatorio, false);
-                }
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
+                if(!isLoading) realizarPesquisa(temas[Math.floor(Math.random()*temas.length)], false);
             }
         });
 
         function saveAndPlay(id, title, thumb, channel) {
             history = history.filter(i => i.id !== id);
             history.unshift({ id, title, thumbnail: thumb, channel });
-            if(history.length > 15) history.pop();
+            if(history.length > 20) history.pop();
             localStorage.setItem('rp_history', JSON.stringify(history));
             renderHistory();
             openPlayer(id);
@@ -157,12 +183,12 @@
             if(history.length > 0) {
                 section.classList.remove('hidden');
                 grid.innerHTML = history.map(v => `
-                    <div class="min-w-[180px] cursor-pointer group" onclick="openPlayer('${v.id}')">
-                        <div class="relative aspect-video rounded-lg overflow-hidden border border-zinc-800 mb-2">
-                            <img src="${v.thumbnail}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition">
-                            <div class="absolute bottom-0 left-0 h-1 bg-red-600" style="width: 85%"></div>
+                    <div class="min-w-[220px] cursor-pointer group" onclick="openPlayer('${v.id}')">
+                        <div class="relative aspect-video rounded-2xl overflow-hidden border border-zinc-800 mb-2">
+                            <img src="${v.thumbnail}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">
+                            <div class="absolute bottom-0 left-0 h-1 bg-red-600" style="width: 90%"></div>
                         </div>
-                        <h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400">${v.title}</h4>
+                        <h4 class="text-[11px] font-semibold line-clamp-1 text-zinc-400 group-hover:text-white transition">${v.title}</h4>
                     </div>
                 `).join('');
             }
@@ -174,24 +200,30 @@
             else {
                 player = new YT.Player('ytPlayer', {
                     height: '100%', width: '100%', videoId: id,
-                    playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
+                    playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1, 'origin': window.location.origin },
                     events: { 'onStateChange': (e) => e.data === YT.PlayerState.ENDED && playNext() }
                 });
             }
-            document.getElementById('playerContainer').className = "full-player";
-            document.body.style.overflow = 'hidden';
+            setFull();
         }
 
         function playNext() {
-            const next = videoPool[Math.floor(Math.random() * videoPool.length)];
-            player.loadVideoById(next);
+            player.loadVideoById(videoPool[Math.floor(Math.random()*videoPool.length)]);
         }
 
         function togglePlayerMode() {
             const c = document.getElementById('playerContainer');
-            const isMini = c.classList.contains('mini-player');
-            c.className = isMini ? "full-player" : "mini-player";
-            document.body.style.overflow = isMini ? 'hidden' : 'auto';
+            c.classList.contains('mini-player') ? setFull() : setMini();
+        }
+
+        function setFull() {
+            document.getElementById('playerContainer').className = "full-player";
+            document.body.style.overflow = 'hidden';
+        }
+
+        function setMini() {
+            document.getElementById('playerContainer').className = "mini-player";
+            document.body.style.overflow = 'auto';
         }
 
         function closePlayer() {
@@ -200,7 +232,6 @@
             document.body.style.overflow = 'auto';
         }
 
-        document.getElementById('searchBtn').addEventListener('click', () => realizarPesquisa(document.getElementById('searchInput').value, true));
         document.getElementById('searchInput').addEventListener('keypress', (e) => e.key === 'Enter' && realizarPesquisa(e.target.value, true));
     </script>
 </body>
