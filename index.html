@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Clone Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #0f0f0f; color: white; }
+        .yt-red { color: #ff0000; }
+        .sidebar-item:hover { background-color: #272727; }
+        .video-card:hover .thumbnail-overlay { opacity: 1; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #3f3f3f; border-radius: 10px; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <nav class="fixed top-0 w-full bg-[#0f0f0f] z-50 flex items-center justify-between px-4 h-14">
+        <div class="flex items-center gap-4">
+            <i class="fa-solid fa-bars text-xl p-2 cursor-pointer hover:bg-zinc-800 rounded-full"></i>
+            <div class="flex items-center gap-1 cursor-pointer">
+                <i class="fa-brands fa-youtube text-3xl yt-red"></i>
+                <span class="text-xl font-bold tracking-tighter">YouTube</span>
+            </div>
+        </div>
+
+        <div class="flex items-center flex-1 max-w-[720px] ml-10">
+            <div class="flex w-full bg-zinc-900 border border-zinc-800 rounded-full items-center px-4 py-1 ml-4 shadow-inner">
+                <input id="searchInput" type="text" placeholder="Pesquisar" class="bg-transparent w-full outline-none text-zinc-200 py-1">
+                <button onclick="searchVideo()" class="pl-4 text-zinc-400 hover:text-white border-l border-zinc-700 ml-2">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+            <div class="ml-4 p-2 bg-zinc-800 rounded-full cursor-pointer hover:bg-zinc-700">
+                <i class="fa-solid fa-microphone"></i>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-video p-2 hover:bg-zinc-800 rounded-full cursor-pointer"></i>
+            <i class="fa-solid fa-bell p-2 hover:bg-zinc-800 rounded-full cursor-pointer"></i>
+            <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-sm font-bold">U</div>
+        </div>
+    </nav>
+
+    <div class="flex pt-14">
+        
+        <aside class="hidden lg:block w-60 fixed left-0 h-screen p-3 space-y-2 overflow-y-auto">
+            <div class="sidebar-item flex items-center gap-5 p-2 rounded-xl bg-zinc-800 cursor-pointer">
+                <i class="fa-solid fa-house"></i> <span>Início</span>
+            </div>
+            <div class="sidebar-item flex items-center gap-5 p-2 rounded-xl cursor-pointer text-zinc-400">
+                <i class="fa-solid fa-bolt"></i> <span>Shorts</span>
+            </div>
+            <div class="sidebar-item flex items-center gap-5 p-2 rounded-xl cursor-pointer text-zinc-400">
+                <i class="fa-solid fa-clapperboard"></i> <span>Inscrições</span>
+            </div>
+            <hr class="border-zinc-800 my-4">
+            <div class="sidebar-item flex items-center gap-5 p-2 rounded-xl cursor-pointer text-zinc-400">
+                <i class="fa-solid fa-clock-rotate-left"></i> <span>Histórico</span>
+            </div>
+            <div class="sidebar-item flex items-center gap-5 p-2 rounded-xl cursor-pointer text-zinc-400">
+                <i class="fa-solid fa-play"></i> <span>Seus vídeos</span>
+            </div>
+        </aside>
+
+        <main class="lg:ml-60 w-full p-6">
+            
+            <div id="playerSection" class="hidden w-full max-w-[1280px] mx-auto mb-10">
+                <div class="aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl">
+                    <iframe id="videoPlayer" class="w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div class="mt-4 space-y-2">
+                    <h1 id="videoTitle" class="text-xl font-bold"></h1>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div id="channelIcon" class="w-10 h-10 bg-zinc-700 rounded-full"></div>
+                            <div>
+                                <p id="authorName" class="font-bold text-sm"></p>
+                                <p class="text-xs text-zinc-400">1.2M inscritos</p>
+                            </div>
+                            <button class="bg-white text-black px-4 py-2 rounded-full font-bold text-sm ml-4 hover:bg-zinc-200">Inscrever-se</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="flex bg-zinc-800 rounded-full overflow-hidden">
+                                <button class="px-4 py-2 hover:bg-zinc-700 border-r border-zinc-700"><i class="fa-solid fa-thumbs-up mr-2"></i>Like</button>
+                                <button class="px-4 py-2 hover:bg-zinc-700"><i class="fa-solid fa-thumbs-down"></i></button>
+                            </div>
+                            <button class="bg-zinc-800 px-4 py-2 rounded-full hover:bg-zinc-700 font-bold text-sm"><i class="fa-solid fa-share mr-2"></i>Compartilhar</button>
+                        </div>
+                    </div>
+                    <div id="videoDesc" class="bg-zinc-800 p-4 rounded-xl text-sm mt-4 text-zinc-300"></div>
+                </div>
+            </div>
+
+            <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                <div class="animate-pulse space-y-3">
+                    <div class="aspect-video bg-zinc-800 rounded-2xl"></div>
+                    <div class="flex gap-3">
+                        <div class="w-10 h-10 bg-zinc-800 rounded-full"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 bg-zinc-800 rounded w-3/4"></div>
+                            <div class="h-3 bg-zinc-800 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = "https://api.vreden.my.id/api/v1/download/play/video?query=";
+
+        async function searchVideo() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+
+            const grid = document.getElementById('videoGrid');
+            const playerSection = document.getElementById('playerSection');
+            
+            try {
+                const response = await fetch(API_URL + encodeURIComponent(query));
+                const data = await response.json();
+
+                if (data.status && data.result.metadata) {
+                    const meta = data.result.metadata;
+                    
+                    // Atualiza o Player
+                    document.getElementById('videoPlayer').src = `https://www.youtube.com/embed/${meta.videoId}?autoplay=1`;
+                    document.getElementById('videoTitle').innerText = meta.title;
+                    document.getElementById('authorName').innerText = meta.author.name;
+                    document.getElementById('videoDesc').innerText = meta.description.substring(0, 200) + "...";
+                    
+                    playerSection.classList.remove('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // Adiciona na Grid (Simulando resultados)
+                    renderVideoCard(meta);
+                }
+            } catch (error) {
+                console.error("Erro na busca:", error);
+                alert("Erro ao buscar o vídeo.");
+            }
+        }
+
+        function renderVideoCard(meta) {
+            const grid = document.getElementById('videoGrid');
+            const card = `
+                <div class="video-card cursor-pointer space-y-3 transition-transform active:scale-95" onclick="playThis('${meta.videoId}', '${meta.title.replace(/'/g, "\\'")}', '${meta.author.name}')">
+                    <div class="relative rounded-2xl overflow-hidden shadow-lg">
+                        <img src="${meta.image}" class="w-full h-full object-cover aspect-video">
+                        <div class="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-bold">
+                            ${meta.timestamp}
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-zinc-700 to-zinc-800 rounded-full flex-shrink-0"></div>
+                        <div class="overflow-hidden">
+                            <h3 class="font-bold text-sm leading-tight line-clamp-2">${meta.title}</h3>
+                            <p class="text-zinc-400 text-xs mt-1 hover:text-white transition-colors">${meta.author.name}</p>
+                            <p class="text-zinc-400 text-xs">${meta.views.toLocaleString()} visualizações • ${meta.ago}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('afterbegin', card);
+        }
+
+        function playThis(id, title, author) {
+            document.getElementById('videoPlayer').src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+            document.getElementById('videoTitle').innerText = title;
+            document.getElementById('authorName').innerText = author;
+            document.getElementById('playerSection').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Listener para o Enter no input
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchVideo();
+        });
+
+        // Carregamento inicial de exemplo
+        window.onload = () => {
+            document.getElementById('videoGrid').innerHTML = ""; // Limpa Skeleton
+            // Você pode carregar vídeos padrão aqui
+        }
+    </script>
+</body>
+</html>
