@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -14,28 +14,18 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     
     <style>
-        body { background-color: #080808; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; }
+        body { background-color: #080808; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
         .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255,0,0,0.3); }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* PLAYER AJUSTADO */
+        /* PLAYER */
         #playerContainer { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5000; }
         .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
-        .mini-player { position: fixed !important; bottom: 85px; left: 15px; width: 300px !important; height: 170px !important; border-radius: 12px; border: 2px solid #ff0000; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-
-        /* BARRA INFERIOR (ESTILO APP NATIVO) */
-        .bottom-nav { 
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; 
-            background: rgba(13, 13, 13, 0.95); backdrop-filter: blur(15px);
-            display: flex; justify-content: space-around; align-items: center;
-            border-top: 1px solid #222; z-index: 4000; padding-bottom: env(safe-area-inset-bottom);
-        }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #777; font-size: 10px; gap: 4px; cursor: pointer; }
-        .nav-item.active { color: white; }
-        .nav-item.active i { color: #ff0000; }
+        .mini-player { position: fixed !important; bottom: 20px; left: 20px; width: 300px !important; height: 170px !important; border-radius: 12px; border: 2px solid #ff0000; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
 
         @media (max-width: 640px) {
-            .mini-player { bottom: 70px; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
+            .mini-player { bottom: 0; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
         }
     </style>
 </head>
@@ -49,7 +39,7 @@
         
         <div class="flex-1 max-w-[400px] mx-4">
             <div class="flex bg-zinc-900 border border-zinc-800 rounded-full px-4 py-1.5 focus-within:border-red-600">
-                <input id="searchInput" type="text" placeholder="O que queres ver?" class="bg-transparent w-full outline-none text-sm text-white">
+                <input id="searchInput" type="text" placeholder="Pesquisar..." class="bg-transparent w-full outline-none text-sm text-white">
                 <button id="searchBtn" class="ml-2 text-zinc-400 hover:text-red-500">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
@@ -61,41 +51,24 @@
         </div>
     </nav>
 
-    <main class="pt-24 pb-32 p-4 lg:p-8 max-w-[2000px] mx-auto">
+    <main class="pt-24 pb-10 p-4 lg:p-8 max-w-[2000px] mx-auto">
         <div id="historySection" class="hidden mb-10">
-            <h2 class="text-xs font-bold text-red-500 mb-4 uppercase tracking-widest">Recentes</h2>
+            <h2 class="text-xs font-bold text-red-500 mb-4 uppercase tracking-widest">Continuar assistindo</h2>
             <div id="historyGrid" class="flex gap-4 overflow-x-auto no-scrollbar pb-2"></div>
         </div>
 
         <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10"></div>
         
-        <div id="loaderScroll" class="py-10 text-center opacity-0"><div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div></div>
+        <div id="loaderScroll" class="py-20 text-center opacity-0">
+            <div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div>
+        </div>
     </main>
-
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="location.reload()">
-            <i class="fa-solid fa-house text-lg"></i>
-            <span>Início</span>
-        </div>
-        <div class="nav-item" onclick="realizarPesquisa('Shorts Tendências', true)">
-            <i class="fa-solid fa-bolt text-lg"></i>
-            <span>Shorts</span>
-        </div>
-        <div class="nav-item" onclick="document.getElementById('searchInput').focus()">
-            <i class="fa-solid fa-magnifying-glass text-lg"></i>
-            <span>Explorar</span>
-        </div>
-        <div class="nav-item" onclick="alert('Biblioteca em breve!')">
-            <i class="fa-solid fa-clapperboard text-lg"></i>
-            <span>Biblioteca</span>
-        </div>
-    </div>
 
     <div id="playerWrapper" class="hidden">
         <div id="playerContainer" class="full-player">
             <div class="absolute top-5 left-5 z-[6000] flex gap-3">
-                <button onclick="closePlayer()" class="w-12 h-12 bg-black/60 rounded-full text-red-500"><i class="fa-solid fa-xmark"></i></button>
-                <button onclick="togglePlayerMode()" class="w-12 h-12 bg-black/60 rounded-full text-white"><i class="fa-solid fa-compress"></i></button>
+                <button onclick="closePlayer()" class="w-12 h-12 bg-black/60 rounded-full text-red-500 border border-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="togglePlayerMode()" class="w-12 h-12 bg-black/60 rounded-full text-white border border-white/10 flex items-center justify-center"><i class="fa-solid fa-compress"></i></button>
             </div>
             <div id="ytPlayer"></div>
         </div>
@@ -106,13 +79,13 @@
         let videoPool = [];
         let history = JSON.parse(localStorage.getItem('rp_history')) || [];
         let isLoading = false;
+        const temas = ["Música 2025", "Tecnologia", "Gaming 4K", "Ciência", "Natureza"];
 
         function onYouTubeIframeAPIReady() {
             renderHistory();
             realizarPesquisa("Destaques", true);
         }
 
-        // FUNÇÃO DE PESQUISA CORRIGIDA
         async function realizarPesquisa(query, limpar = true) {
             if (!query || isLoading) return;
             isLoading = true;
@@ -138,39 +111,43 @@
                         if(!videoPool.includes(id)) {
                             videoPool.push(id);
                             grid.insertAdjacentHTML('beforeend', `
-                                <div class="cursor-pointer group" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
-                                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
+                                <div class="cursor-pointer group animate-in fade-in duration-500" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
+                                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800/50">
                                         <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
-                                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration}</span>
+                                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500 border border-red-500/20">${v.duration}</span>
                                     </div>
-                                    <h3 class="font-bold text-sm line-clamp-2 group-hover:text-red-500">${v.title}</h3>
-                                    <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
+                                    <div class="flex gap-3">
+                                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-zinc-500 text-[10px]">${v.channel[0]}</div>
+                                        <div>
+                                            <h3 class="font-bold text-sm line-clamp-2 leading-tight group-hover:text-red-500 transition">${v.title}</h3>
+                                            <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             `);
                         }
                     });
                 }
-            } catch (e) { console.error("Erro na busca:", e); }
+            } catch (e) { console.error(e); }
             finally { isLoading = false; loader.style.opacity = "0"; }
         }
 
-        // EVENTOS DE CLIQUE E TECLADO (CORRIGIDOS)
+        // Eventos de Busca
         document.getElementById('searchBtn').addEventListener('click', () => {
-            const query = document.getElementById('searchInput').value;
-            realizarPesquisa(query, true);
+            realizarPesquisa(document.getElementById('searchInput').value, true);
         });
 
         document.getElementById('searchInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 realizarPesquisa(e.target.value, true);
-                e.target.blur(); // Fecha teclado no telemóvel
+                e.target.blur();
             }
         });
 
-        // SCROLL INFINITO
+        // Scroll Infinito
         window.addEventListener('scroll', () => {
             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
-                if(!isLoading) realizarPesquisa("Vídeos Recomendados", false);
+                if(!isLoading) realizarPesquisa(temas[Math.floor(Math.random()*temas.length)], false);
             }
         });
 
@@ -188,9 +165,11 @@
             if(history.length > 0) {
                 section.classList.remove('hidden');
                 grid.innerHTML = history.map(v => `
-                    <div class="min-w-[160px] cursor-pointer" onclick="openPlayer('${v.id}')">
-                        <img src="${v.thumbnail}" class="aspect-video rounded-lg object-cover mb-1 border border-zinc-800">
-                        <h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400">${v.title}</h4>
+                    <div class="min-w-[160px] cursor-pointer group" onclick="openPlayer('${v.id}')">
+                        <div class="relative aspect-video rounded-lg overflow-hidden border border-zinc-800 mb-1">
+                            <img src="${v.thumbnail}" class="w-full h-full object-cover">
+                        </div>
+                        <h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400 group-hover:text-white">${v.title}</h4>
                     </div>
                 `).join('');
             }
