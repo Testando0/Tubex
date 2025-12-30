@@ -3,80 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YouTube Premium - Histórico</title>
+    <title>REDPLAY - Vídeos Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.youtube.com/iframe_api"></script>
     <style>
-        body { background-color: #0f0f0f; color: white; -webkit-tap-highlight-color: transparent; }
-        .yt-red { color: #ff0000; }
+        body { background-color: #080808; color: white; -webkit-tap-highlight-color: transparent; }
+        .redplay-icon { background: #ff0000; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255,0,0,0.4); }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .chip { padding: 6px 12px; background: #272727; border-radius: 8px; font-size: 14px; white-space: nowrap; cursor: pointer; transition: 0.2s; }
-        .chip.active { background: white; color: black; }
-        #playerContainer { transition: all 0.3s ease; z-index: 5000; }
+        .chip { padding: 6px 14px; background: #1a1a1a; border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; border: 1px solid #333; }
+        .chip.active { background: #ff0000; border-color: #ff0000; }
+        
+        /* PLAYER CONTAINER */
+        #playerContainer { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 5000; }
         .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
-        .mini-player { position: fixed !important; bottom: 10px; right: 10px; width: 320px !important; height: 180px !important; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #333; overflow: hidden; }
+        
+        /* MINI PLAYER AJUSTADO */
+        .mini-player { position: fixed !important; bottom: 20px; left: 20px; /* MOVIDO PARA ESQUERDA */
+            width: 320px !important; height: 180px !important; border-radius: 12px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9); border: 2px solid #ff0000; overflow: hidden; }
+
+        /* CONTROLES DO PLAYER (MOVIDOS PARA A ESQUERDA) */
+        .player-controls { position: absolute; top: 15px; left: 15px; /* LADO ESQUERDO PARA NÃO TAPAR LEGENDAS */
+            z-index: 6000; display: flex; gap: 10px; pointer-events: auto; }
+        
+        .ctrl-btn { background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1); 
+            backdrop-filter: blur(5px); padding: 10px; rounded-full; width: 45px; height: 45px;
+            display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+
         @media (max-width: 640px) {
-            .mini-player { bottom: 0; right: 0; width: 100% !important; height: 80px !important; border-radius: 0; display: flex; background: #212121; }
-            .mini-player #ytPlayer { width: 140px !important; }
+            .mini-player { bottom: 0; left: 0; width: 100% !important; height: 90px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
+            .mini-player #ytPlayer { width: 150px !important; }
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <nav class="fixed top-0 w-full bg-[#0f0f0f] z-[3000] flex items-center justify-between px-4 h-14 border-b border-zinc-800">
-        <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
-            <i class="fa-brands fa-youtube text-3xl yt-red"></i>
-            <span class="text-xl font-bold tracking-tighter italic">YouTube</span>
+    <nav class="fixed top-0 w-full bg-[#080808]/95 backdrop-blur-md z-[3000] flex items-center justify-between px-4 h-16 border-b border-zinc-800">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+            <div class="redplay-icon"><i class="fa-solid fa-play text-white text-xs"></i></div>
+            <span class="text-xl font-black tracking-tight">REDPLAY</span>
         </div>
 
-        <div class="flex-1 max-w-[500px] mx-4">
-            <div class="flex bg-zinc-900 border border-zinc-800 rounded-full items-center px-4 py-1.5 focus-within:border-blue-500">
-                <input id="searchInput" type="text" placeholder="Pesquisar" class="bg-transparent w-full outline-none text-sm">
-                <button id="searchBtn" class="ml-2 text-zinc-400"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <div class="flex-1 max-w-[450px] mx-4">
+            <div class="flex bg-zinc-900/50 border border-zinc-700 rounded-lg items-center px-4 py-2 focus-within:border-red-600 transition-all">
+                <input id="searchInput" type="text" placeholder="O que vamos assistir?" class="bg-transparent w-full outline-none text-sm">
+                <button id="searchBtn" class="ml-2 text-zinc-400 hover:text-red-500"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
         </div>
-        <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center font-bold text-xs">U</div>
+        <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center font-bold text-xs">R</div>
     </nav>
 
-    <div class="fixed top-14 w-full bg-[#0f0f0f] z-[2000] px-4 py-3 flex gap-3 overflow-x-auto border-b border-zinc-900">
-        <div class="chip active" onclick="filtro('Destaques', this)">Tudo</div>
-        <div class="chip" onclick="filtro('Música', this)">Música</div>
-        <div class="chip" onclick="filtro('Gameplay', this)">Jogos</div>
-        <div class="chip" onclick="filtro('Podcasts', this)">Podcasts</div>
-        <button onclick="clearHistory()" class="ml-auto text-xs text-zinc-500 hover:text-red-500">Limpar Histórico</button>
+    <div class="fixed top-16 w-full bg-[#080808] z-[2000] px-4 py-3 flex gap-3 overflow-x-auto border-b border-zinc-900 no-scrollbar">
+        <div class="chip active" onclick="filtro('Destaques', this)">Início</div>
+        <div class="chip" onclick="filtro('Música High Bass', this)">Música</div>
+        <div class="chip" onclick="filtro('Games 4K', this)">Games</div>
+        <div class="chip" onclick="filtro('Live Stream', this)">Ao Vivo</div>
+        <button onclick="clearHistory()" class="ml-auto text-xs text-zinc-600">Limpar Vistos</button>
     </div>
 
-    <main class="pt-32 pb-24 p-4 lg:p-10 max-w-[1800px] mx-auto">
+    <main class="pt-36 pb-24 p-4 lg:p-10 max-w-[1920px] mx-auto">
         
-        <div id="historySection" class="hidden mb-12">
-            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-zinc-400"></i> Assistidos Recentemente
-            </h2>
-            <div id="historyGrid" class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                </div>
-            <hr class="border-zinc-800 mt-6">
+        <div id="historySection" class="hidden mb-12 animate-in fade-in slide-in-from-left duration-500">
+            <h2 class="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-4">Continuar assistindo</h2>
+            <div id="historyGrid" class="flex gap-4 overflow-x-auto pb-4 no-scrollbar"></div>
         </div>
 
-        <h2 id="sectionTitle" class="text-lg font-bold mb-6">Recomendações</h2>
-        <div id="loader" class="hidden mx-auto w-8 h-8 border-4 border-zinc-700 border-t-red-600 rounded-full animate-spin my-10"></div>
-        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-10"></div>
+        <h2 id="sectionTitle" class="text-xl font-bold mb-6">Recomendados para você</h2>
+        <div id="loader" class="hidden mx-auto w-10 h-10 border-2 border-zinc-800 border-t-red-600 rounded-full animate-spin my-10"></div>
+        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10"></div>
     </main>
 
     <div id="playerWrapper" class="hidden">
         <div id="playerContainer" class="full-player">
-            <div class="absolute top-2 right-2 z-[6000] flex gap-2">
-                <button onclick="togglePlayerMode()" class="bg-black/60 p-3 rounded-full"><i class="fa-solid fa-compress"></i></button>
-                <button onclick="closePlayer()" class="bg-black/60 p-3 rounded-full"><i class="fa-solid fa-xmark"></i></button>
+            <div class="player-controls">
+                <button onclick="closePlayer()" class="ctrl-btn text-red-500 hover:scale-110 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <button id="miniBtn" onclick="togglePlayerMode()" class="ctrl-btn text-white hover:scale-110 transition">
+                    <i id="miniIcon" class="fa-solid fa-compress"></i>
+                </button>
             </div>
-            <div id="ytPlayer"></div>
+            <div id="ytPlayer" class="w-full h-full"></div>
         </div>
     </div>
 
     <script>
         let player;
         let videoPool = [];
-        let history = JSON.parse(localStorage.getItem('yt_history')) || [];
+        let history = JSON.parse(localStorage.getItem('rp_history')) || [];
 
         function onYouTubeIframeAPIReady() {
             renderHistory();
@@ -84,8 +99,8 @@
         }
 
         async function realizarPesquisa(query) {
-            const loader = document.getElementById('loader');
             const grid = document.getElementById('videoGrid');
+            const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
             if(query !== "Destaques") grid.innerHTML = "";
 
@@ -104,25 +119,23 @@
         }
 
         function createCard(v, id, type) {
-            const isHistory = type === 'history';
+            const isH = type === 'history';
             return `
-                <div class="${isHistory ? 'min-w-[200px] w-[200px]' : ''} cursor-pointer group" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
-                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-800 mb-2">
-                        <img src="${v.thumbnail}" class="w-full h-full object-cover">
-                        <span class="absolute bottom-1 right-1 bg-black/80 px-1 rounded text-[10px] font-bold">${v.duration || ''}</span>
+                <div class="${isH ? 'min-w-[220px]' : ''} cursor-pointer group" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
+                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
+                        <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500 border border-red-500/30">${v.duration || '00:00'}</span>
                     </div>
-                    <h3 class="font-bold text-xs line-clamp-2">${v.title}</h3>
-                    <p class="text-zinc-500 text-[10px] mt-1">${v.channel}</p>
+                    <h3 class="font-bold text-sm line-clamp-2 group-hover:text-red-500 transition">${v.title}</h3>
+                    <p class="text-zinc-500 text-xs mt-1 uppercase tracking-tighter">${v.channel}</p>
                 </div>`;
         }
 
         function saveAndPlay(id, title, thumb, channel) {
-            // Salvar no histórico (evitando duplicatas)
-            history = history.filter(item => item.id !== id);
+            history = history.filter(i => i.id !== id);
             history.unshift({ id, title, thumbnail: thumb, channel });
-            if(history.length > 10) history.pop(); // Limite de 10 itens
-            localStorage.setItem('yt_history', JSON.stringify(history));
-            
+            if(history.length > 12) history.pop();
+            localStorage.setItem('rp_history', JSON.stringify(history));
             renderHistory();
             openPlayer(id);
         }
@@ -133,15 +146,7 @@
             if(history.length > 0) {
                 section.classList.remove('hidden');
                 grid.innerHTML = history.map(v => createCard(v, v.id, 'history')).join('');
-            } else {
-                section.classList.add('hidden');
-            }
-        }
-
-        function clearHistory() {
-            history = [];
-            localStorage.removeItem('yt_history');
-            renderHistory();
+            } else { section.classList.add('hidden'); }
         }
 
         function openPlayer(id) {
@@ -150,11 +155,11 @@
             else {
                 player = new YT.Player('ytPlayer', {
                     height: '100%', width: '100%', videoId: id,
-                    playerVars: { 'autoplay': 1 },
+                    playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
                     events: { 'onStateChange': (e) => e.data === YT.PlayerState.ENDED && playNext() }
                 });
             }
-            document.getElementById('playerContainer').className = "full-player";
+            setFull();
         }
 
         function playNext() {
@@ -163,10 +168,23 @@
         }
 
         function togglePlayerMode() {
-            const container = document.getElementById('playerContainer');
-            const isMini = container.classList.contains('mini-player');
-            container.className = isMini ? "full-player" : "mini-player";
-            document.body.style.overflow = isMini ? 'hidden' : 'auto';
+            const c = document.getElementById('playerContainer');
+            if(c.classList.contains('mini-player')) setFull();
+            else setMini();
+        }
+
+        function setMini() {
+            const c = document.getElementById('playerContainer');
+            c.className = "mini-player";
+            document.getElementById('miniIcon').className = "fa-solid fa-expand";
+            document.body.style.overflow = 'auto';
+        }
+
+        function setFull() {
+            const c = document.getElementById('playerContainer');
+            c.className = "full-player";
+            document.getElementById('miniIcon').className = "fa-solid fa-compress";
+            document.body.style.overflow = 'hidden';
         }
 
         function closePlayer() {
@@ -175,10 +193,11 @@
             document.body.style.overflow = 'auto';
         }
 
-        function filtro(t, el) {
+        function clearHistory() { history = []; localStorage.removeItem('rp_history'); renderHistory(); }
+        function filtro(t, el) { 
             document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            realizarPesquisa(t);
+            el.classList.add('active'); 
+            realizarPesquisa(t); 
         }
 
         document.getElementById('searchBtn').addEventListener('click', () => realizarPesquisa(document.getElementById('searchInput').value));
