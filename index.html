@@ -3,11 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <meta name="theme-color" content="#080808">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
     <title>REDPLAY Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,10 +14,17 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* PLAYER */
         #playerContainer { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5000; }
         .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
         .mini-player { position: fixed !important; bottom: 20px; left: 20px; width: 300px !important; height: 170px !important; border-radius: 12px; border: 2px solid #ff0000; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+
+        /* Gatinho Fofo */
+        .cat-avatar {
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000;
+            background: url('https://cataas.com/cat?width=100') center/cover;
+            cursor: pointer; transition: 0.3s;
+        }
+        .cat-avatar:hover { transform: scale(1.1); }
 
         @media (max-width: 640px) {
             .mini-player { bottom: 0; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
@@ -40,15 +42,10 @@
         <div class="flex-1 max-w-[400px] mx-4">
             <div class="flex bg-zinc-900 border border-zinc-800 rounded-full px-4 py-1.5 focus-within:border-red-600">
                 <input id="searchInput" type="text" placeholder="Pesquisar..." class="bg-transparent w-full outline-none text-sm text-white">
-                <button id="searchBtn" class="ml-2 text-zinc-400 hover:text-red-500">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
+                <button id="searchBtn" class="ml-2 text-zinc-400"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
         </div>
-
-        <div class="w-9 h-9 rounded-full border-2 border-red-600 p-0.5 overflow-hidden">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="perfil">
-        </div>
+        <div class="cat-avatar"></div>
     </nav>
 
     <main class="pt-24 pb-10 p-4 lg:p-8 max-w-[2000px] mx-auto">
@@ -58,10 +55,7 @@
         </div>
 
         <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10"></div>
-        
-        <div id="loaderScroll" class="py-20 text-center opacity-0">
-            <div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div>
-        </div>
+        <div id="loaderScroll" class="py-20 text-center opacity-0"><div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div></div>
     </main>
 
     <div id="playerWrapper" class="hidden">
@@ -79,7 +73,7 @@
         let videoPool = [];
         let history = JSON.parse(localStorage.getItem('rp_history')) || [];
         let isLoading = false;
-        const temas = ["Música 2025", "Tecnologia", "Gaming 4K", "Ciência", "Natureza"];
+        const temas = ["Destaques", "Tecnologia", "Gaming 4K", "Música 2025"];
 
         function onYouTubeIframeAPIReady() {
             renderHistory();
@@ -89,15 +83,9 @@
         async function realizarPesquisa(query, limpar = true) {
             if (!query || isLoading) return;
             isLoading = true;
-            
             const grid = document.getElementById('videoGrid');
             const loader = document.getElementById('loaderScroll');
-            
-            if(limpar) { 
-                grid.innerHTML = ""; 
-                videoPool = []; 
-                window.scrollTo(0,0);
-            }
+            if(limpar) { grid.innerHTML = ""; videoPool = []; window.scrollTo(0,0); }
             loader.style.opacity = "1";
 
             try {
@@ -112,17 +100,12 @@
                             videoPool.push(id);
                             grid.insertAdjacentHTML('beforeend', `
                                 <div class="cursor-pointer group animate-in fade-in duration-500" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
-                                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800/50">
+                                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
                                         <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
-                                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500 border border-red-500/20">${v.duration}</span>
+                                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration}</span>
                                     </div>
-                                    <div class="flex gap-3">
-                                        <div class="w-8 h-8 bg-zinc-800 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-zinc-500 text-[10px]">${v.channel[0]}</div>
-                                        <div>
-                                            <h3 class="font-bold text-sm line-clamp-2 leading-tight group-hover:text-red-500 transition">${v.title}</h3>
-                                            <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
-                                        </div>
-                                    </div>
+                                    <h3 class="font-bold text-sm line-clamp-2 leading-tight group-hover:text-red-500 transition">${v.title}</h3>
+                                    <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
                                 </div>
                             `);
                         }
@@ -132,22 +115,12 @@
             finally { isLoading = false; loader.style.opacity = "0"; }
         }
 
-        // Eventos de Busca
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            realizarPesquisa(document.getElementById('searchInput').value, true);
-        });
+        document.getElementById('searchBtn').addEventListener('click', () => realizarPesquisa(document.getElementById('searchInput').value, true));
+        document.getElementById('searchInput').addEventListener('keypress', (e) => e.key === 'Enter' && realizarPesquisa(e.target.value, true));
 
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                realizarPesquisa(e.target.value, true);
-                e.target.blur();
-            }
-        });
-
-        // Scroll Infinito
         window.addEventListener('scroll', () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
-                if(!isLoading) realizarPesquisa(temas[Math.floor(Math.random()*temas.length)], false);
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000 && !isLoading) {
+                realizarPesquisa(temas[Math.floor(Math.random()*temas.length)], false);
             }
         });
 
@@ -165,11 +138,9 @@
             if(history.length > 0) {
                 section.classList.remove('hidden');
                 grid.innerHTML = history.map(v => `
-                    <div class="min-w-[160px] cursor-pointer group" onclick="openPlayer('${v.id}')">
-                        <div class="relative aspect-video rounded-lg overflow-hidden border border-zinc-800 mb-1">
-                            <img src="${v.thumbnail}" class="w-full h-full object-cover">
-                        </div>
-                        <h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400 group-hover:text-white">${v.title}</h4>
+                    <div class="min-w-[180px] cursor-pointer" onclick="openPlayer('${v.id}')">
+                        <div class="relative aspect-video rounded-xl overflow-hidden mb-1"><img src="${v.thumbnail}" class="w-full h-full object-cover"></div>
+                        <h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400">${v.title}</h4>
                     </div>
                 `).join('');
             }
@@ -179,24 +150,13 @@
             document.getElementById('playerWrapper').classList.remove('hidden');
             if (player) player.loadVideoById(id);
             else {
-                player = new YT.Player('ytPlayer', {
-                    height: '100%', width: '100%', videoId: id,
-                    playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
-                    events: { 'onStateChange': (e) => e.data === YT.PlayerState.ENDED && playNext() }
-                });
+                player = new YT.Player('ytPlayer', { height: '100%', width: '100%', videoId: id, playerVars: { 'autoplay': 1, 'rel': 0 }, events: { 'onStateChange': (e) => e.data === YT.PlayerState.ENDED && playNext() } });
             }
             setFull();
         }
 
-        function playNext() {
-            player.loadVideoById(videoPool[Math.floor(Math.random() * videoPool.length)]);
-        }
-
-        function togglePlayerMode() {
-            const c = document.getElementById('playerContainer');
-            c.classList.contains('mini-player') ? setFull() : setMini();
-        }
-
+        function playNext() { player.loadVideoById(videoPool[Math.floor(Math.random() * videoPool.length)]); }
+        function togglePlayerMode() { const c = document.getElementById('playerContainer'); c.classList.contains('mini-player') ? setFull() : setMini(); }
         function setFull() { document.getElementById('playerContainer').className = "full-player"; document.body.style.overflow = 'hidden'; }
         function setMini() { document.getElementById('playerContainer').className = "mini-player"; document.body.style.overflow = 'auto'; }
         function closePlayer() { player.stopVideo(); document.getElementById('playerWrapper').classList.add('hidden'); document.body.style.overflow = 'auto'; }
