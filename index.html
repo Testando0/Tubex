@@ -18,13 +18,11 @@
         .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
         .mini-player { position: fixed !important; bottom: 20px; left: 20px; width: 300px !important; height: 170px !important; border-radius: 12px; border: 2px solid #ff0000; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
 
-        /* Gatinho Fofo */
         .cat-avatar {
             width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000;
             background: url('https://cataas.com/cat?width=100') center/cover;
             cursor: pointer; transition: 0.3s;
         }
-        .cat-avatar:hover { transform: scale(1.1); }
 
         @media (max-width: 640px) {
             .mini-player { bottom: 0; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
@@ -36,7 +34,7 @@
     <nav class="fixed top-0 w-full bg-[#080808]/90 backdrop-blur-md z-[3000] flex items-center justify-between px-4 h-16 border-b border-zinc-900">
         <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
             <div class="redplay-logo"><i class="fa-solid fa-play text-white text-xs"></i></div>
-            <span class="text-xl font-black tracking-tighter uppercase">RedPlay</span>
+            <span class="text-xl font-black tracking-tighter uppercase text-white">RedPlay</span>
         </div>
         
         <div class="flex-1 max-w-[400px] mx-4">
@@ -73,7 +71,7 @@
         let videoPool = [];
         let history = JSON.parse(localStorage.getItem('rp_history')) || [];
         let isLoading = false;
-        const temas = ["Destaques", "Tecnologia", "Gaming 4K", "Música 2025"];
+        let currentQuery = "Destaques";
 
         function onYouTubeIframeAPIReady() {
             renderHistory();
@@ -83,9 +81,24 @@
         async function realizarPesquisa(query, limpar = true) {
             if (!query || isLoading) return;
             isLoading = true;
+            currentQuery = query;
+            
             const grid = document.getElementById('videoGrid');
             const loader = document.getElementById('loaderScroll');
-            if(limpar) { grid.innerHTML = ""; videoPool = []; window.scrollTo(0,0); }
+            const histSection = document.getElementById('historySection');
+            
+            if(limpar) { 
+                grid.innerHTML = ""; 
+                videoPool = []; 
+                window.scrollTo(0,0);
+                
+                // REGRA SOLICITADA: Esconde o histórico se for uma pesquisa manual
+                if(query !== "Destaques") {
+                    histSection.classList.add('hidden');
+                } else if(history.length > 0) {
+                    histSection.classList.remove('hidden');
+                }
+            }
             loader.style.opacity = "1";
 
             try {
@@ -120,7 +133,9 @@
 
         window.addEventListener('scroll', () => {
             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000 && !isLoading) {
-                realizarPesquisa(temas[Math.floor(Math.random()*temas.length)], false);
+                // No scroll infinito, usamos o tema atual da busca ou um tema aleatório se estiver na home
+                const t = currentQuery === "Destaques" ? ["Tecnologia", "Gaming", "Música"][Math.floor(Math.random()*3)] : currentQuery;
+                realizarPesquisa(t, false);
             }
         });
 
@@ -128,19 +143,21 @@
             history = history.filter(i => i.id !== id);
             history.unshift({ id, title, thumbnail: thumb, channel });
             localStorage.setItem('rp_history', JSON.stringify(history.slice(0, 15)));
-            renderHistory();
+            if(currentQuery === "Destaques") renderHistory();
             openPlayer(id);
         }
 
         function renderHistory() {
             const section = document.getElementById('historySection');
             const grid = document.getElementById('historyGrid');
-            if(history.length > 0) {
+            if(history.length > 0 && currentQuery === "Destaques") {
                 section.classList.remove('hidden');
                 grid.innerHTML = history.map(v => `
-                    <div class="min-w-[180px] cursor-pointer" onclick="openPlayer('${v.id}')">
-                        <div class="relative aspect-video rounded-xl overflow-hidden mb-1"><img src="${v.thumbnail}" class="w-full h-full object-cover"></div>
-                        <h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400">${v.title}</h4>
+                    <div class="min-w-[180px] cursor-pointer group" onclick="openPlayer('${v.id}')">
+                        <div class="relative aspect-video rounded-xl overflow-hidden mb-1 border border-zinc-800">
+                            <img src="${v.thumbnail}" class="w-full h-full object-cover">
+                        </div>
+                        <h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400 group-hover:text-white">${v.title}</h4>
                     </div>
                 `).join('');
             }
