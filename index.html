@@ -2,169 +2,165 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Pro - Background Mode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YouTube Premium - Autoplay Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
-        body { background-color: #0f0f0f; color: white; overflow-x: hidden; }
+        body { background-color: #0f0f0f; color: white; -webkit-tap-highlight-color: transparent; }
         .yt-red { color: #ff0000; }
-        .video-card:hover img { transform: scale(1.05); }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
-        /* Estilo do Player Flutuante (Segundo Plano no Site) */
-        #playerContainer {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000;
-        }
+        #playerContainer { transition: all 0.3s ease-in-out; z-index: 2000; }
+        .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
+        .mini-player { position: fixed !important; bottom: 10px; right: 10px; width: 320px !important; height: 180px !important; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #333; overflow: hidden; }
 
-        /* Classe para o modo Mini Player */
-        .mini-player {
-            position: fixed !important;
-            bottom: 20px;
-            right: 20px;
-            width: 320px !important;
-            height: 180px !important;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            border: 2px solid #3f3f3f;
-            border-radius: 12px;
+        @media (max-width: 640px) {
+            .mini-player { bottom: 0; right: 0; width: 100% !important; height: 80px !important; border-radius: 0; display: flex; background: #212121; }
+            .mini-player #ytPlayer { width: 140px !important; pointer-events: none; }
         }
-
-        /* Overlay de Tela Cheia (Original) */
-        .full-player {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: black;
-        }
-
-        .hidden { display: none; }
     </style>
 </head>
 <body class="antialiased">
 
-    <nav class="fixed top-0 w-full bg-[#0f0f0f] z-[1100] flex items-center justify-between px-4 h-14 border-b border-zinc-800">
+    <nav class="fixed top-0 w-full bg-[#0f0f0f] z-[3000] flex items-center justify-between px-3 h-14 border-b border-zinc-800">
         <div class="flex items-center gap-4">
-            <i class="fa-solid fa-bars text-xl cursor-pointer"></i>
+            <i class="fa-solid fa-bars text-lg p-2 cursor-pointer"></i>
             <div class="flex items-center gap-1 cursor-pointer" onclick="location.reload()">
-                <i class="fa-brands fa-youtube text-3xl yt-red"></i>
-                <span class="text-xl font-bold tracking-tighter italic">Premium</span>
+                <i class="fa-brands fa-youtube text-2xl yt-red"></i>
+                <span class="text-lg font-bold tracking-tighter">YouTube</span>
             </div>
         </div>
 
-        <div class="flex items-center flex-1 max-w-[600px] mx-4">
-            <div class="flex w-full bg-zinc-900 border border-zinc-800 rounded-full items-center px-4 py-1.5 focus-within:border-blue-500 transition-all">
-                <input id="searchInput" type="text" placeholder="Pesquisar..." class="bg-transparent w-full outline-none text-sm">
-                <button id="searchBtn" class="pl-4 text-zinc-400 hover:text-white border-l border-zinc-700 ml-2">
+        <div class="flex-1 max-w-[500px] mx-2">
+            <div class="flex bg-zinc-900 border border-zinc-800 rounded-full items-center px-4 py-1.5 focus-within:border-blue-500">
+                <input id="searchInput" type="text" placeholder="Pesquisar e ativar Autoplay" class="bg-transparent w-full outline-none text-sm text-white">
+                <button id="searchBtn" class="ml-2 text-zinc-400">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </div>
         </div>
-
-        <div class="w-8 h-8 bg-gradient-to-tr from-red-600 to-purple-600 rounded-full flex items-center justify-center font-bold text-xs">U</div>
+        <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center font-bold text-xs">A</div>
     </nav>
 
-    <main class="pt-20 p-4 lg:p-10">
-        <div id="loader" class="hidden text-center py-20">
-            <div class="inline-block w-8 h-8 border-4 border-zinc-700 border-t-red-600 rounded-full animate-spin"></div>
-        </div>
-
-        <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
+    <main class="pt-20 p-4 lg:p-10 max-w-[1600px] mx-auto">
+        <div id="loader" class="hidden mx-auto w-8 h-8 border-4 border-zinc-700 border-t-red-600 rounded-full animate-spin"></div>
+        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
             </div>
     </main>
 
     <div id="playerWrapper" class="hidden">
         <div id="playerContainer" class="full-player">
-            <div class="absolute top-2 right-2 z-[2000] flex gap-2">
-                <button id="toggleMode" onclick="togglePlayerMode()" class="bg-black/60 hover:bg-black/90 p-2 rounded-lg text-white text-xs">
-                    <i class="fa-solid fa-compress"></i> Mini
-                </button>
-                <button onclick="closePlayer()" class="bg-red-600/80 hover:bg-red-600 p-2 rounded-lg text-white text-xs">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+            <div class="absolute top-2 right-2 z-[2500] flex gap-2">
+                <button onclick="togglePlayerMode()" class="bg-black/50 backdrop-blur-md p-3 rounded-full text-white"><i class="fa-solid fa-compress"></i></button>
+                <button onclick="closePlayer()" class="bg-black/50 backdrop-blur-md p-3 rounded-full text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <iframe id="videoIframe" class="w-full h-full" src="" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+            
+            <div class="w-full h-full">
+                <div id="ytPlayer"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.getElementById('searchBtn');
-        const grid = document.getElementById('videoGrid');
-        const playerWrapper = document.getElementById('playerWrapper');
-        const playerContainer = document.getElementById('playerContainer');
-        const videoIframe = document.getElementById('videoIframe');
-        const toggleBtn = document.getElementById('toggleMode');
-
+        let player;
+        let videoList = []; // Armazena os IDs dos vídeos na tela
         let isMini = false;
 
-        async function buscar() {
-            const query = searchInput.value.trim();
+        // Função obrigatória da YouTube API
+        function onYouTubeIframeAPIReady() {}
+
+        async function realizarPesquisa() {
+            const query = document.getElementById('searchInput').value.trim();
             if (!query) return;
 
             document.getElementById('loader').classList.remove('hidden');
+            const grid = document.getElementById('videoGrid');
             grid.innerHTML = "";
+            videoList = [];
 
             try {
-                const url = `https://kuromi-system-tech.onrender.com/api/pesquisayt?query=${encodeURIComponent(query)}`;
-                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+                const api = `https://kuromi-system-tech.onrender.com/api/pesquisayt?query=${encodeURIComponent(query)}`;
+                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(api)}`);
                 const data = await response.json();
 
                 data.formattedVideos.forEach(v => {
-                    const id = v.link.split('v=')[1];
+                    const videoId = v.link.split('v=')[1];
+                    videoList.push(videoId); // Adiciona ao pool de reprodução
+
                     const card = `
-                        <div class="video-card cursor-pointer group" onclick="openPlayer('${id}')">
-                            <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-800 mb-3">
-                                <img src="${v.thumbnail}" class="w-full h-full object-cover transition-transform duration-300">
-                                <span class="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-bold">${v.duration}</span>
+                        <div class="video-card cursor-pointer" onclick="openPlayer('${videoId}')">
+                            <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-800 mb-2">
+                                <img src="${v.thumbnail}" class="w-full h-full object-cover">
+                                <span class="absolute bottom-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-bold">${v.duration}</span>
                             </div>
-                            <div class="flex gap-3">
-                                <div class="w-9 h-9 bg-zinc-800 rounded-full flex-shrink-0"></div>
-                                <div>
-                                    <h3 class="font-bold text-sm leading-tight line-clamp-2">${v.title}</h3>
-                                    <p class="text-zinc-400 text-xs mt-1">${v.channel}</p>
-                                    <p class="text-zinc-500 text-[11px]">${v.views.toLocaleString()} views</p>
-                                </div>
-                            </div>
+                            <h3 class="font-bold text-sm leading-tight line-clamp-2">${v.title}</h3>
+                            <p class="text-zinc-400 text-xs mt-1">${v.channel}</p>
                         </div>`;
                     grid.insertAdjacentHTML('beforeend', card);
                 });
-            } catch (e) { alert("Erro ao carregar vídeos."); }
+            } catch (e) { console.error(e); }
             finally { document.getElementById('loader').classList.add('hidden'); }
         }
 
         function openPlayer(id) {
-            videoIframe.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-            playerWrapper.classList.remove('hidden');
+            document.getElementById('playerWrapper').classList.remove('hidden');
+            
+            if (player) {
+                player.loadVideoById(id);
+            } else {
+                // Cria o player pela primeira vez
+                player = new YT.Player('ytPlayer', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: id,
+                    playerVars: { 'autoplay': 1, 'rel': 0, 'enablejsapi': 1 },
+                    events: {
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+            }
             setFullMode();
         }
 
-        function togglePlayerMode() {
-            if (isMini) setFullMode();
-            else setMiniMode();
+        function onPlayerStateChange(event) {
+            // YT.PlayerState.ENDED = 0
+            if (event.data === YT.PlayerState.ENDED) {
+                playNextRandom();
+            }
         }
 
-        function setMiniMode() {
-            isMini = true;
-            playerContainer.className = "mini-player";
-            toggleBtn.innerHTML = '<i class="fa-solid fa-expand"></i> Full';
-            document.body.style.overflow = 'auto'; // Permite scroll no site
+        function playNextRandom() {
+            if (videoList.length > 0) {
+                const randomIndex = Math.floor(Math.random() * videoList.length);
+                const nextId = videoList[randomIndex];
+                console.log("Autoplay: Próximo vídeo aleatório ->", nextId);
+                player.loadVideoById(nextId);
+            }
+        }
+
+        // Funções de UI
+        function togglePlayerMode() {
+            isMini = !isMini;
+            document.getElementById('playerContainer').className = isMini ? "mini-player" : "full-player";
+            document.body.style.overflow = isMini ? 'auto' : 'hidden';
         }
 
         function setFullMode() {
             isMini = false;
-            playerContainer.className = "full-player";
-            toggleBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Mini';
-            document.body.style.overflow = 'hidden'; // Trava scroll para focar no vídeo
+            document.getElementById('playerContainer').className = "full-player";
+            document.body.style.overflow = 'hidden';
         }
 
         function closePlayer() {
-            videoIframe.src = "";
-            playerWrapper.classList.add('hidden');
+            player.stopVideo();
+            document.getElementById('playerWrapper').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
 
-        searchBtn.addEventListener('click', buscar);
-        searchInput.addEventListener('keypress', (e) => e.key === 'Enter' && buscar());
+        document.getElementById('searchBtn').addEventListener('click', realizarPesquisa);
+        document.getElementById('searchInput').addEventListener('keypress', (e) => e.key === 'Enter' && realizarPesquisa());
     </script>
 </body>
 </html>
