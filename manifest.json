@@ -1,0 +1,15 @@
+{
+  "name": "REDPLAY Pro",
+  "short_name": "REDPLAY",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    {
+      "src": "https://uploads.zero-two-apis.com.br/uploads/images/f00052c7c2ba549349ac9d839dbe4a28a521e8ea2d244d05e857aa2d103d519f.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
