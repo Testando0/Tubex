@@ -53,7 +53,7 @@
 
         <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10"></div>
         
-        <div id="loaderScroll" class="py-20 text-center">
+        <div id="loaderScroll" class="py-10 text-center opacity-0 transition-opacity duration-300">
             <div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div>
         </div>
     </main>
@@ -61,8 +61,8 @@
     <div id="playerWrapper" class="hidden">
         <div id="playerContainer" class="full-player">
             <div class="absolute top-5 left-5 z-[6000] flex gap-3">
-                <button onclick="closePlayer()" class="w-12 h-12 bg-black/60 rounded-full text-red-500 border border-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-                <button onclick="togglePlayerMode()" class="w-12 h-12 bg-black/60 rounded-full text-white border border-white/10 flex items-center justify-center"><i class="fa-solid fa-compress"></i></button>
+                <button onclick="closePlayer()" class="w-12 h-12 bg-black/60 rounded-full text-red-500 flex items-center justify-center border border-white/10"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="togglePlayerMode()" class="w-12 h-12 bg-black/60 rounded-full text-white flex items-center justify-center border border-white/10"><i class="fa-solid fa-compress"></i></button>
             </div>
             <div id="ytPlayer"></div>
         </div>
@@ -72,7 +72,9 @@
         document.getElementById('avatar').style.backgroundImage = `url('https://cataas.com/cat?width=100&t=${Math.random()}')`;
 
         let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false, currentQuery = "Destaques";
-        const temasIniciais = ["Música 2025", "Tecnologia", "Gaming 4K", "Trailers de Filmes", "Documentários Ciência"];
+        
+        // Temas de segurança para quando a busca principal não retornar novos vídeos
+        const backupThemes = ["vídeos virais", "shorts engraçados", "trending brasil", "gameplay", "musica mix"];
 
         function onYouTubeIframeAPIReady() { renderHistory(); realizarPesquisa("Destaques", true); }
 
@@ -80,9 +82,12 @@
             if (isLoading) return;
             isLoading = true;
             
+            const loader = document.getElementById('loaderScroll');
             const grid = document.getElementById('videoGrid');
             const histSection = document.getElementById('historySection');
             
+            loader.style.opacity = "1";
+
             if(limpar) { 
                 grid.innerHTML = ""; 
                 videoPool = []; 
@@ -92,36 +97,47 @@
             }
 
             try {
-                // Se estivermos no modo infinito da Home, pegamos um tema aleatório
-                const searchQuery = (query === "Destaques" && !limpar) ? temasIniciais[Math.floor(Math.random()*temasIniciais.length)] : query;
+                // Se for scroll e não tiver mais resultados da query atual, ele tenta um backup
+                const queryFinal = (!limpar && query === currentQuery) ? `${query} novo conteúdo` : query;
                 
-                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://kuromi-system-tech.onrender.com/api/pesquisayt?query='+searchQuery)}`);
+                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://kuromi-system-tech.onrender.com/api/pesquisayt?query='+queryFinal)}`);
                 const data = await response.json();
                 
+                let addedCount = 0;
                 if (data.formattedVideos && data.formattedVideos.length > 0) {
                     data.formattedVideos.forEach(v => {
                         const id = v.link.split('v=')[1];
                         if(!videoPool.includes(id)) {
                             videoPool.push(id);
+                            addedCount++;
                             grid.insertAdjacentHTML('beforeend', `
                                 <div class="cursor-pointer group animate-in fade-in duration-500" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
                                     <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
                                         <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                         <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration}</span>
                                     </div>
-                                    <h3 class="font-bold text-sm line-clamp-2 leading-tight">${v.title}</h3>
-                                    <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
+                                    <h3 class="font-bold text-sm line-clamp-2 leading-tight group-hover:text-red-500 transition">${v.title}</h3>
+                                    <p class="text-zinc-500 text-xs mt-1 font-medium">${v.channel}</p>
                                 </div>`);
                         }
                     });
                 }
-            } catch(e) { console.error(e); }
-            finally { isLoading = false; }
+
+                // Se a API não retornou NADA de novo, mudamos levemente a busca interna para o próximo scroll
+                if(addedCount === 0 && !limpar) {
+                    currentQuery = backupThemes[Math.floor(Math.random()*backupThemes.length)];
+                }
+
+            } catch(e) { 
+                console.error("Erro na busca:", e); 
+            } finally { 
+                isLoading = false; 
+                loader.style.opacity = "0"; // A bolinha some quando termina de processar
+            }
         }
 
-        // LÓGICA DE SCROLL INFINITO RECURSIVA
         window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1200) {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
                 if (!isLoading) {
                     realizarPesquisa(currentQuery, false);
                 }
@@ -138,13 +154,14 @@
 
         function renderHistory() {
             const grid = document.getElementById('historyGrid');
-            grid.innerHTML = history.map(v => `<div class="min-w-[180px] cursor-pointer" onclick="openPlayer('${v.id}')"><div class="relative aspect-video rounded-xl overflow-hidden mb-1 border border-zinc-800"><img src="${v.thumbnail}" class="w-full h-full object-cover"></div><h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400">${v.title}</h4></div>`).join('');
+            if(!grid) return;
+            grid.innerHTML = history.map(v => `<div class="min-w-[180px] cursor-pointer" onclick="openPlayer('${v.id}')"><div class="relative aspect-video rounded-xl overflow-hidden mb-1 border border-zinc-800 shadow-md"><img src="${v.thumbnail}" class="w-full h-full object-cover"></div><h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400">${v.title}</h4></div>`).join('');
         }
 
         function openPlayer(id) {
             document.getElementById('playerWrapper').classList.remove('hidden');
             if (player) player.loadVideoById(id);
-            else player = new YT.Player('ytPlayer', { height:'100%', width:'100%', videoId:id, playerVars:{'autoplay':1}, events:{'onStateChange':(e)=>e.data===0 && playNext()} });
+            else player = new YT.Player('ytPlayer', { height:'100%', width:'100%', videoId:id, playerVars:{'autoplay':1, 'rel':0}, events:{'onStateChange':(e)=>e.data===0 && playNext()} });
             setFull();
         }
 
