@@ -18,30 +18,60 @@
     
     <style>
         * { -webkit-tap-highlight-color: transparent; }
-        body { background-color: #080808; color: white; font-family: sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
+        body { background-color: #080808; color: white; font-family: sans-serif; overflow-x: hidden; overscroll-behavior-y: auto; }
+        
         .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
         .cat-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000; background-size: cover; background-position: center; cursor: pointer; }
-        #playerContainer { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5000; }
-        .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
-        .mini-player { position: fixed !important; bottom: 20px; left: 20px; width: 300px !important; height: 170px !important; border-radius: 12px; border: 2px solid #ff0000; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-        @media (max-width: 640px) { .mini-player { bottom: 0; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; } }
+        
+        /* Ajuste crucial para permitir scroll com player aberto */
+        #playerWrapper { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            z-index: 5000; 
+            pointer-events: none; /* Deixa cliques passarem para o fundo */
+        }
+
+        #playerContainer { 
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            pointer-events: auto; /* Reativa cliques apenas no player */
+            background: black;
+            overflow: hidden;
+        }
+
+        .full-player { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; }
+        
+        .mini-player { 
+            position: fixed !important; 
+            bottom: 20px; right: 20px; /* Mudado para direita para não cobrir menus comuns */
+            width: 300px !important; height: 170px !important; 
+            border-radius: 12px; 
+            border: 2px solid #ff0000; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
+        }
+
+        @media (max-width: 640px) { 
+            .mini-player { bottom: 0; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; } 
+        }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
+        /* Controles Centrais */
         .player-controls {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            gap: 30px; z-index: 5500;
+            gap: 20px; z-index: 5500;
             background: rgba(0,0,0,0.5);
             opacity: 0; transition: opacity 0.3s;
             pointer-events: none;
         }
         #playerContainer:hover .player-controls, .player-controls.active { opacity: 1; pointer-events: auto; }
         .control-btn {
-            width: 55px; height: 55px; border-radius: 50%;
-            background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 18px; color: white; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1);
+            font-size: 16px; color: white; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1);
         }
         .control-btn:active { transform: scale(0.9); background: rgba(255,0,0,0.4); }
         .mini-player .player-controls { display: none; }
@@ -80,15 +110,15 @@
     <div id="playerWrapper" class="hidden">
         <div id="playerContainer" class="full-player" onclick="showControlsTemporarily()">
             <div class="absolute top-5 left-5 z-[6000] flex gap-3">
-                <button onclick="closePlayer()" class="w-12 h-12 bg-black/60 rounded-full text-red-500 flex items-center justify-center border border-white/10"><i class="fa-solid fa-xmark"></i></button>
-                <button onclick="togglePlayerMode()" class="w-12 h-12 bg-black/60 rounded-full text-white flex items-center justify-center border border-white/10"><i class="fa-solid fa-compress"></i></button>
+                <button onclick="closePlayer()" class="w-10 h-10 bg-black/60 rounded-full text-red-500 flex items-center justify-center border border-white/10"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="togglePlayerMode()" class="w-10 h-10 bg-black/60 rounded-full text-white flex items-center justify-center border border-white/10"><i class="fa-solid fa-compress"></i></button>
             </div>
 
             <div class="player-controls" id="customControls">
-                <button onclick="seekVideo(-10)" class="control-btn"><i class="fa-solid fa-rotate-left"></i><span class="text-[9px] font-bold">10s</span></button>
-                <button onclick="playPrev()" class="control-btn"><i class="fa-solid fa-backward"></i></button>
-                <button onclick="playNext()" class="control-btn"><i class="fa-solid fa-forward"></i></button>
-                <button onclick="seekVideo(10)" class="control-btn"><i class="fa-solid fa-rotate-right"></i><span class="text-[9px] font-bold">10s</span></button>
+                <button onclick="event.stopPropagation(); seekVideo(-10)" class="control-btn"><i class="fa-solid fa-rotate-left"></i><span class="text-[8px] font-bold">10s</span></button>
+                <button onclick="event.stopPropagation(); playPrev()" class="control-btn"><i class="fa-solid fa-backward"></i></button>
+                <button onclick="event.stopPropagation(); playNext()" class="control-btn"><i class="fa-solid fa-forward"></i></button>
+                <button onclick="event.stopPropagation(); seekVideo(10)" class="control-btn"><i class="fa-solid fa-rotate-right"></i><span class="text-[8px] font-bold">10s</span></button>
             </div>
 
             <div id="ytPlayer"></div>
@@ -100,35 +130,25 @@
 
         let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false;
         let currentQuery = "Destaques", currentIndex = -1, controlTimer;
-        
-        // Temas para manter o scroll infinito sempre com novidades
-        const infiniteThemes = ["hits 2024", "musicas virais", "lançamentos", "top brasil", "reels music"];
+        const infiniteThemes = ["musicas", "hits", "pop", "funk", "trap", "viral"];
 
         function onYouTubeIframeAPIReady() { renderHistory(); realizarPesquisa("Destaques", true); }
 
         async function realizarPesquisa(query, limpar = true) {
             if (isLoading) return;
             isLoading = true;
-            
             const loader = document.getElementById('loaderScroll');
             const grid = document.getElementById('videoGrid');
             const histSection = document.getElementById('historySection');
-            
             loader.style.opacity = "1";
 
             if(limpar) { 
-                grid.innerHTML = ""; 
-                videoPool = []; 
-                window.scrollTo(0,0);
-                currentQuery = query;
-                // Só mostra o histórico se a busca for "Destaques"
+                grid.innerHTML = ""; videoPool = []; window.scrollTo(0,0); currentQuery = query;
                 histSection.className = (query === "Destaques" && history.length > 0) ? "mb-10" : "hidden";
             }
 
             try {
-                // Lógica de "Vídeos Ilimitados": se for scroll, adiciona um sufixo aleatório para variar os resultados
                 const searchParam = limpar ? query : `${query} ${infiniteThemes[Math.floor(Math.random()*infiniteThemes.length)]}`;
-                
                 const response = await fetch(`https://delirius-apiofc.vercel.app/search/searchtrack?q=${encodeURIComponent(searchParam)}`);
                 const data = await response.json();
                 
@@ -142,8 +162,8 @@
                                         <img src="${v.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                         <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration.label}</span>
                                     </div>
-                                    <h3 class="font-bold text-sm line-clamp-1 leading-tight group-hover:text-red-500 transition">${v.title}</h3>
-                                    <p class="text-zinc-500 text-xs mt-1 font-medium">${v.artist}</p>
+                                    <h3 class="font-bold text-sm line-clamp-1 group-hover:text-red-500 transition">${v.title}</h3>
+                                    <p class="text-zinc-500 text-xs mt-1">${v.artist}</p>
                                 </div>`);
                         }
                     });
@@ -152,9 +172,7 @@
         }
 
         window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
-                realizarPesquisa(currentQuery, false);
-            }
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) realizarPesquisa(currentQuery, false);
         };
 
         function saveAndPlay(id, title, thumb, artist) {
@@ -173,9 +191,21 @@
             setFull();
         }
 
-        function seekVideo(sec) { player.seekTo(player.getCurrentTime() + sec, true); showControlsTemporarily(); }
-        function playNext() { if(currentIndex < videoPool.length-1) { currentIndex++; player.loadVideoById(videoPool[currentIndex].id); } showControlsTemporarily(); }
-        function playPrev() { if(currentIndex > 0) { currentIndex--; player.loadVideoById(videoPool[currentIndex].id); } showControlsTemporarily(); }
+        function seekVideo(sec) { player.seekTo(player.getCurrentTime() + sec, true); }
+        
+        function playNext() { 
+            if(currentIndex < videoPool.length-1) { 
+                currentIndex++; 
+                player.loadVideoById(videoPool[currentIndex].id); 
+            } 
+        }
+        
+        function playPrev() { 
+            if(currentIndex > 0) { 
+                currentIndex--; 
+                player.loadVideoById(videoPool[currentIndex].id); 
+            } 
+        }
 
         function showControlsTemporarily() {
             const c = document.getElementById('customControls');
@@ -184,9 +214,27 @@
             controlTimer = setTimeout(() => c.classList.remove('active'), 3000);
         }
 
-        function togglePlayerMode() { document.getElementById('playerContainer').className = document.getElementById('playerContainer').className.includes('full-player') ? "mini-player" : "full-player"; }
-        function setFull() { document.getElementById('playerContainer').className = "full-player"; document.body.style.overflow = 'hidden'; }
-        function closePlayer() { player.stopVideo(); document.getElementById('playerWrapper').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        function togglePlayerMode() { 
+            const container = document.getElementById('playerContainer');
+            if(container.className.includes('full-player')) {
+                container.className = "mini-player";
+                document.body.style.overflow = 'auto'; // Reativa scroll
+            } else {
+                container.className = "full-player";
+                document.body.style.overflow = 'hidden'; // Trava scroll
+            }
+        }
+
+        function setFull() { 
+            document.getElementById('playerContainer').className = "full-player"; 
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closePlayer() { 
+            player.stopVideo(); 
+            document.getElementById('playerWrapper').classList.add('hidden'); 
+            document.body.style.overflow = 'auto'; 
+        }
 
         function renderHistory() {
             const grid = document.getElementById('historyGrid');
