@@ -3,30 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#080808">
+    
+    <link rel="apple-touch-icon" href="https://uploads.zero-two-apis.com.br/uploads/images/f00052c7c2ba549349ac9d839dbe4a28a521e8ea2d244d05e857aa2d103d519f.jpg">
+
     <title>REDPLAY Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.youtube.com/iframe_api"></script>
     
     <style>
-        body { background-color: #080808; color: white; -webkit-tap-highlight-color: transparent; font-family: sans-serif; overflow-x: hidden; }
-        .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(255,0,0,0.3); }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        * { -webkit-tap-highlight-color: transparent; }
+        body { background-color: #080808; color: white; font-family: sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
         
+        .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+
+        /* Avatar de Gatinhos Aleatórios (Voltou!) */
+        .cat-avatar {
+            width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000;
+            background-image: url('https://cataas.com/cat?width=100&t=' + Math.random());
+            background-size: cover; background-position: center;
+            cursor: pointer;
+        }
+
         #playerContainer { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5000; }
         .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
         .mini-player { position: fixed !important; bottom: 20px; left: 20px; width: 300px !important; height: 170px !important; border-radius: 12px; border: 2px solid #ff0000; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
 
-        .cat-avatar {
-            width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000;
-            background: url('https://cataas.com/cat?width=100') center/cover;
-            cursor: pointer; transition: 0.3s;
-        }
-
         @media (max-width: 640px) {
             .mini-player { bottom: 0; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
         }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="antialiased">
@@ -34,7 +45,7 @@
     <nav class="fixed top-0 w-full bg-[#080808]/90 backdrop-blur-md z-[3000] flex items-center justify-between px-4 h-16 border-b border-zinc-900">
         <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
             <div class="redplay-logo"><i class="fa-solid fa-play text-white text-xs"></i></div>
-            <span class="text-xl font-black tracking-tighter uppercase text-white">RedPlay</span>
+            <span class="text-xl font-black uppercase tracking-tighter">RedPlay</span>
         </div>
         
         <div class="flex-1 max-w-[400px] mx-4">
@@ -43,7 +54,7 @@
                 <button id="searchBtn" class="ml-2 text-zinc-400"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
         </div>
-        <div class="cat-avatar"></div>
+        <div id="avatar" class="cat-avatar"></div>
     </nav>
 
     <main class="pt-24 pb-10 p-4 lg:p-8 max-w-[2000px] mx-auto">
@@ -67,116 +78,72 @@
     </div>
 
     <script>
-        let player;
-        let videoPool = [];
-        let history = JSON.parse(localStorage.getItem('rp_history')) || [];
-        let isLoading = false;
-        let currentQuery = "Destaques";
+        // Faz o gatinho ser aleatório a cada refresh
+        document.getElementById('avatar').style.backgroundImage = `url('https://cataas.com/cat?width=100&t=${Math.random()}')`;
 
-        function onYouTubeIframeAPIReady() {
-            renderHistory();
-            realizarPesquisa("Destaques", true);
-        }
+        let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false, currentQuery = "Destaques";
+
+        function onYouTubeIframeAPIReady() { renderHistory(); realizarPesquisa("Destaques", true); }
 
         async function realizarPesquisa(query, limpar = true) {
             if (!query || isLoading) return;
-            isLoading = true;
-            currentQuery = query;
-            
-            const grid = document.getElementById('videoGrid');
-            const loader = document.getElementById('loaderScroll');
-            const histSection = document.getElementById('historySection');
-            
+            isLoading = true; currentQuery = query;
+            const grid = document.getElementById('videoGrid'), histSection = document.getElementById('historySection');
             if(limpar) { 
-                grid.innerHTML = ""; 
-                videoPool = []; 
-                window.scrollTo(0,0);
-                
-                // REGRA SOLICITADA: Esconde o histórico se for uma pesquisa manual
-                if(query !== "Destaques") {
-                    histSection.classList.add('hidden');
-                } else if(history.length > 0) {
-                    histSection.classList.remove('hidden');
-                }
+                grid.innerHTML = ""; videoPool = []; window.scrollTo(0,0); 
+                histSection.className = (query === "Destaques" && history.length > 0) ? "mb-10" : "hidden";
             }
-            loader.style.opacity = "1";
+            document.getElementById('loaderScroll').style.opacity = "1";
 
             try {
-                const api = `https://kuromi-system-tech.onrender.com/api/pesquisayt?query=${encodeURIComponent(query)}`;
-                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(api)}`);
+                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://kuromi-system-tech.onrender.com/api/pesquisayt?query='+query)}`);
                 const data = await response.json();
-
-                if (data.formattedVideos) {
-                    data.formattedVideos.forEach(v => {
-                        const id = v.link.split('v=')[1];
-                        if(!videoPool.includes(id)) {
-                            videoPool.push(id);
-                            grid.insertAdjacentHTML('beforeend', `
-                                <div class="cursor-pointer group animate-in fade-in duration-500" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
-                                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
-                                        <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
-                                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration}</span>
-                                    </div>
-                                    <h3 class="font-bold text-sm line-clamp-2 leading-tight group-hover:text-red-500 transition">${v.title}</h3>
-                                    <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
+                data.formattedVideos.forEach(v => {
+                    const id = v.link.split('v=')[1];
+                    if(!videoPool.includes(id)) {
+                        videoPool.push(id);
+                        grid.insertAdjacentHTML('beforeend', `
+                            <div class="cursor-pointer group" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
+                                <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
+                                    <img src="${v.thumbnail}" class="w-full h-full object-cover">
+                                    <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration}</span>
                                 </div>
-                            `);
-                        }
-                    });
-                }
-            } catch (e) { console.error(e); }
-            finally { isLoading = false; loader.style.opacity = "0"; }
+                                <h3 class="font-bold text-sm line-clamp-2 leading-tight">${v.title}</h3>
+                                <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
+                            </div>`);
+                    }
+                });
+            } finally { isLoading = false; document.getElementById('loaderScroll').style.opacity = "0"; }
         }
-
-        document.getElementById('searchBtn').addEventListener('click', () => realizarPesquisa(document.getElementById('searchInput').value, true));
-        document.getElementById('searchInput').addEventListener('keypress', (e) => e.key === 'Enter' && realizarPesquisa(e.target.value, true));
-
-        window.addEventListener('scroll', () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000 && !isLoading) {
-                // No scroll infinito, usamos o tema atual da busca ou um tema aleatório se estiver na home
-                const t = currentQuery === "Destaques" ? ["Tecnologia", "Gaming", "Música"][Math.floor(Math.random()*3)] : currentQuery;
-                realizarPesquisa(t, false);
-            }
-        });
 
         function saveAndPlay(id, title, thumb, channel) {
             history = history.filter(i => i.id !== id);
-            history.unshift({ id, title, thumbnail: thumb, channel });
+            history.unshift({id, title, thumbnail: thumb, channel});
             localStorage.setItem('rp_history', JSON.stringify(history.slice(0, 15)));
             if(currentQuery === "Destaques") renderHistory();
             openPlayer(id);
         }
 
         function renderHistory() {
-            const section = document.getElementById('historySection');
             const grid = document.getElementById('historyGrid');
-            if(history.length > 0 && currentQuery === "Destaques") {
-                section.classList.remove('hidden');
-                grid.innerHTML = history.map(v => `
-                    <div class="min-w-[180px] cursor-pointer group" onclick="openPlayer('${v.id}')">
-                        <div class="relative aspect-video rounded-xl overflow-hidden mb-1 border border-zinc-800">
-                            <img src="${v.thumbnail}" class="w-full h-full object-cover">
-                        </div>
-                        <h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400 group-hover:text-white">${v.title}</h4>
-                    </div>
-                `).join('');
-            }
+            grid.innerHTML = history.map(v => `<div class="min-w-[180px] cursor-pointer" onclick="openPlayer('${v.id}')"><div class="relative aspect-video rounded-xl overflow-hidden mb-1 border border-zinc-800"><img src="${v.thumbnail}" class="w-full h-full object-cover"></div><h4 class="text-[10px] font-medium line-clamp-1 text-zinc-400">${v.title}</h4></div>`).join('');
         }
 
         function openPlayer(id) {
             document.getElementById('playerWrapper').classList.remove('hidden');
             if (player) player.loadVideoById(id);
-            else {
-                player = new YT.Player('ytPlayer', { height: '100%', width: '100%', videoId: id, playerVars: { 'autoplay': 1, 'rel': 0 }, events: { 'onStateChange': (e) => e.data === YT.PlayerState.ENDED && playNext() } });
-            }
+            else player = new YT.Player('ytPlayer', { height:'100%', width:'100%', videoId:id, playerVars:{'autoplay':1}, events:{'onStateChange':(e)=>e.data===0 && playNext()} });
             setFull();
         }
 
-        function playNext() { player.loadVideoById(videoPool[Math.floor(Math.random() * videoPool.length)]); }
-        function togglePlayerMode() { const c = document.getElementById('playerContainer'); c.classList.contains('mini-player') ? setFull() : setMini(); }
+        function togglePlayerMode() { document.getElementById('playerContainer').className = document.getElementById('playerContainer').className.includes('full-player') ? "mini-player" : "full-player"; }
         function setFull() { document.getElementById('playerContainer').className = "full-player"; document.body.style.overflow = 'hidden'; }
-        function setMini() { document.getElementById('playerContainer').className = "mini-player"; document.body.style.overflow = 'auto'; }
         function closePlayer() { player.stopVideo(); document.getElementById('playerWrapper').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        function playNext() { player.loadVideoById(videoPool[Math.floor(Math.random()*videoPool.length)]); }
+
+        document.getElementById('searchBtn').onclick = () => realizarPesquisa(document.getElementById('searchInput').value, true);
+        document.getElementById('searchInput').onkeypress = (e) => e.key === 'Enter' && realizarPesquisa(e.target.value, true);
+        window.onscroll = () => { if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 900) realizarPesquisa(currentQuery, false); };
     </script>
 </body>
 </html>
