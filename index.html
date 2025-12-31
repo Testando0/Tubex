@@ -19,24 +19,12 @@
     <style>
         * { -webkit-tap-highlight-color: transparent; }
         body { background-color: #080808; color: white; font-family: sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
-        
         .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-
-        /* Avatar de Gatinhos Aleatórios (Voltou!) */
-        .cat-avatar {
-            width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000;
-            background-image: url('https://cataas.com/cat?width=100&t=' + Math.random());
-            background-size: cover; background-position: center;
-            cursor: pointer;
-        }
-
+        .cat-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000; background-size: cover; background-position: center; cursor: pointer; }
         #playerContainer { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5000; }
         .full-player { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: black; }
         .mini-player { position: fixed !important; bottom: 20px; left: 20px; width: 300px !important; height: 170px !important; border-radius: 12px; border: 2px solid #ff0000; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-
-        @media (max-width: 640px) {
-            .mini-player { bottom: 0; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; }
-        }
+        @media (max-width: 640px) { .mini-player { bottom: 0; left: 0; width: 100% !important; height: 80px !important; border-radius: 0; border: none; border-top: 2px solid #ff0000; } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -64,7 +52,10 @@
         </div>
 
         <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10"></div>
-        <div id="loaderScroll" class="py-20 text-center opacity-0"><div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div></div>
+        
+        <div id="loaderScroll" class="py-20 text-center">
+            <div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div>
+        </div>
     </main>
 
     <div id="playerWrapper" class="hidden">
@@ -78,43 +69,64 @@
     </div>
 
     <script>
-        // Faz o gatinho ser aleatório a cada refresh
         document.getElementById('avatar').style.backgroundImage = `url('https://cataas.com/cat?width=100&t=${Math.random()}')`;
 
         let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false, currentQuery = "Destaques";
+        const temasIniciais = ["Música 2025", "Tecnologia", "Gaming 4K", "Trailers de Filmes", "Documentários Ciência"];
 
         function onYouTubeIframeAPIReady() { renderHistory(); realizarPesquisa("Destaques", true); }
 
         async function realizarPesquisa(query, limpar = true) {
-            if (!query || isLoading) return;
-            isLoading = true; currentQuery = query;
-            const grid = document.getElementById('videoGrid'), histSection = document.getElementById('historySection');
+            if (isLoading) return;
+            isLoading = true;
+            
+            const grid = document.getElementById('videoGrid');
+            const histSection = document.getElementById('historySection');
+            
             if(limpar) { 
-                grid.innerHTML = ""; videoPool = []; window.scrollTo(0,0); 
+                grid.innerHTML = ""; 
+                videoPool = []; 
+                window.scrollTo(0,0);
+                currentQuery = query;
                 histSection.className = (query === "Destaques" && history.length > 0) ? "mb-10" : "hidden";
             }
-            document.getElementById('loaderScroll').style.opacity = "1";
 
             try {
-                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://kuromi-system-tech.onrender.com/api/pesquisayt?query='+query)}`);
+                // Se estivermos no modo infinito da Home, pegamos um tema aleatório
+                const searchQuery = (query === "Destaques" && !limpar) ? temasIniciais[Math.floor(Math.random()*temasIniciais.length)] : query;
+                
+                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://kuromi-system-tech.onrender.com/api/pesquisayt?query='+searchQuery)}`);
                 const data = await response.json();
-                data.formattedVideos.forEach(v => {
-                    const id = v.link.split('v=')[1];
-                    if(!videoPool.includes(id)) {
-                        videoPool.push(id);
-                        grid.insertAdjacentHTML('beforeend', `
-                            <div class="cursor-pointer group" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
-                                <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
-                                    <img src="${v.thumbnail}" class="w-full h-full object-cover">
-                                    <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration}</span>
-                                </div>
-                                <h3 class="font-bold text-sm line-clamp-2 leading-tight">${v.title}</h3>
-                                <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
-                            </div>`);
-                    }
-                });
-            } finally { isLoading = false; document.getElementById('loaderScroll').style.opacity = "0"; }
+                
+                if (data.formattedVideos && data.formattedVideos.length > 0) {
+                    data.formattedVideos.forEach(v => {
+                        const id = v.link.split('v=')[1];
+                        if(!videoPool.includes(id)) {
+                            videoPool.push(id);
+                            grid.insertAdjacentHTML('beforeend', `
+                                <div class="cursor-pointer group animate-in fade-in duration-500" onclick="saveAndPlay('${id}', '${v.title.replace(/'/g,"")}', '${v.thumbnail}', '${v.channel}')">
+                                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
+                                        <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration}</span>
+                                    </div>
+                                    <h3 class="font-bold text-sm line-clamp-2 leading-tight">${v.title}</h3>
+                                    <p class="text-zinc-500 text-xs mt-1">${v.channel}</p>
+                                </div>`);
+                        }
+                    });
+                }
+            } catch(e) { console.error(e); }
+            finally { isLoading = false; }
         }
+
+        // LÓGICA DE SCROLL INFINITO RECURSIVA
+        window.onscroll = () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1200) {
+                if (!isLoading) {
+                    realizarPesquisa(currentQuery, false);
+                }
+            }
+        };
 
         function saveAndPlay(id, title, thumb, channel) {
             history = history.filter(i => i.id !== id);
@@ -143,7 +155,6 @@
 
         document.getElementById('searchBtn').onclick = () => realizarPesquisa(document.getElementById('searchInput').value, true);
         document.getElementById('searchInput').onkeypress = (e) => e.key === 'Enter' && realizarPesquisa(e.target.value, true);
-        window.onscroll = () => { if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 900) realizarPesquisa(currentQuery, false); };
     </script>
 </body>
 </html>
