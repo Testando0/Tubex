@@ -3,8 +3,8 @@
   "short_name": "REDPLAY",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#080808",
-  "theme_color": "#080808",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "https://uploads.zero-two-apis.com.br/uploads/images/48417970227bd8389b054f1c4823bbf9d4bf0eb3b8965e2e360d0101ca12c7d1.jpg",
