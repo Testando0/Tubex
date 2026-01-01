@@ -9,7 +9,8 @@
     {
       "src": "https://uploads.zero-two-apis.com.br/uploads/images/48417970227bd8389b054f1c4823bbf9d4bf0eb3b8965e2e360d0101ca12c7d1.jpg",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }
