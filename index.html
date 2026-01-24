@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>REDPLAY Pro - Fixed</title>
+    <title>REDPLAY Pro - Redz API</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -83,7 +83,7 @@
 
         <div id="errorMsg" class="hidden text-center text-zinc-500 py-10">
             <i class="fa-solid fa-circle-exclamation text-4xl mb-2"></i>
-            <p>Nenhum resultado encontrado ou erro na conexão.</p>
+            <p id="errorText">Nenhum resultado encontrado.</p>
         </div>
 
         <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10"></div>
@@ -117,35 +117,14 @@
         let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false;
         let currentQuery = "Destaques", currentIndex = -1, controlTimer;
         
-        // Termos variados para garantir que a API retorne vídeos diferentes
         const initialTerms = [
-            "Alok", "Gusttavo Lima", "Anitta", "Marilia Mendonca", 
-            "Linkin Park", "Coldplay", "Eminem", "Bruno Mars", 
-            "The Weeknd", "Dua Lipa", "Imagine Dragons", "Post Malone"
+            "Top Hits Brasil", "Funk Hits", "Sertanejo 2024", "Pop Internacional", 
+            "Trap Brasil", "Pagode e Samba", "Rock Clássico", "Eletrônica Viral"
         ];
 
         function onYouTubeIframeAPIReady() { 
             renderHistory(); 
             realizarPesquisa("Destaques", true); 
-        }
-
-        async function fetchSingleVideo(searchTerm) {
-            try {
-                // USA UM PROXY CORS para evitar erro de bloqueio do navegador
-                const targetUrl = `https://api.vreden.my.id/api/v1/download/play/video?query=${encodeURIComponent(searchTerm)}`;
-                // Usando corsproxy.io para passar pelo bloqueio
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-                
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                
-                if (data.status && data.result && data.result.metadata) {
-                    return data.result.metadata;
-                }
-            } catch (error) {
-                console.log("Erro ao buscar termo:", searchTerm);
-            }
-            return null;
         }
 
         async function realizarPesquisa(query, limpar = true) {
@@ -159,6 +138,13 @@
             loader.style.opacity = "1";
             errorMsg.classList.add('hidden');
 
+            // Define o termo de busca
+            let searchTerm = query;
+            if (query === "Destaques" && limpar) {
+                // Pega um tema aleatório para a tela inicial
+                searchTerm = initialTerms[Math.floor(Math.random() * initialTerms.length)];
+            }
+
             if(limpar) { 
                 grid.innerHTML = ""; 
                 videoPool = []; 
@@ -167,48 +153,42 @@
                 document.getElementById('historySection').className = (history.length > 0) ? "mb-10" : "hidden";
             }
 
-            let searchTerms = [];
+            try {
+                // URL DA NOVA API REDZ
+                const targetUrl = `https://redzinapi-tech.onrender.com/youtube/search?query=${encodeURIComponent(searchTerm)}&apikey=REDZ`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                let resultsFound = false;
 
-            if (query === "Destaques") {
-                // Embaralha e pega 8 termos da lista inicial
-                searchTerms = initialTerms.sort(() => 0.5 - Math.random()).slice(0, 8);
-            } else {
-                // Cria variações da pesquisa do usuário para tentar obter vídeos diferentes
-                searchTerms = [
-                    query,
-                    `${query} official`,
-                    `${query} video clip`,
-                    `${query} ao vivo`,
-                    `${query} remix`
-                ];
-            }
-
-            // Faz todas as requisições ao mesmo tempo
-            const promises = searchTerms.map(term => fetchSingleVideo(term));
-            const results = await Promise.all(promises);
-            
-            let videosAdded = 0;
-
-            results.forEach(v => {
-                // Verifica duplicatas pelo ID
-                if (v && !videoPool.find(item => item.id === v.videoId)) {
-                    addVideoToGrid(v);
-                    videosAdded++;
+                if (data.status && data.resultado && Array.isArray(data.resultado)) {
+                    // Itera sobre a lista de resultados da nova API
+                    data.resultado.forEach(v => {
+                        // Filtra apenas vídeos (ignora canais) e remove duplicatas
+                        if (v.type === 'video' && !videoPool.find(item => item.id === v.videoId)) {
+                            addVideoToGrid(v);
+                            resultsFound = true;
+                        }
+                    });
                 }
-            });
 
-            // Se não encontrou nada, tenta uma segunda rodada de busca com o termo puro
-            if (videosAdded === 0 && query !== "Destaques" && limpar) {
-                errorMsg.classList.remove('hidden');
-                errorMsg.innerHTML = `<p>Nada encontrado para "${query}". Tente outro termo.</p>`;
-            } else if (videosAdded === 0 && query === "Destaques") {
-                 // Fallback se a API falhar totalmente
-                 errorMsg.classList.remove('hidden');
-                 errorMsg.innerHTML = `<p>Erro de conexão com a API.</p>`;
+                if (!resultsFound && limpar) {
+                    errorMsg.classList.remove('hidden');
+                    document.getElementById('errorText').innerText = `Nenhum vídeo encontrado para "${query}".`;
+                }
+
+            } catch (error) {
+                console.error("Erro na API:", error);
+                if(limpar) {
+                    errorMsg.classList.remove('hidden');
+                    document.getElementById('errorText').innerText = "Erro ao conectar com a API Redz.";
+                }
+            } finally {
+                isLoading = false; 
+                loader.style.opacity = "0"; 
             }
-
-            isLoading = false; 
-            loader.style.opacity = "0"; 
         }
 
         function addVideoToGrid(v) {
@@ -216,9 +196,10 @@
                 id: v.videoId, 
                 title: v.title, 
                 thumb: v.thumbnail || v.image, 
-                artist: v.author.name,
-                duration: v.timestamp || "VIDEO",
-                views: formatViews(v.views)
+                artist: v.author ? v.author.name : 'Desconhecido',
+                duration: v.timestamp || v.duration?.timestamp || "--:--",
+                views: formatViews(v.views),
+                ago: v.ago || ''
             };
 
             videoPool.push(videoData);
@@ -231,7 +212,7 @@
                     </div>
                     <h3 class="font-bold text-sm line-clamp-2 group-hover:text-red-500 transition">${videoData.title}</h3>
                     <p class="text-zinc-500 text-xs mt-1">${videoData.artist}</p>
-                    <p class="text-zinc-600 text-[10px] mt-0.5">${videoData.views} • ${v.ago || 'YouTube'}</p>
+                    <p class="text-zinc-600 text-[10px] mt-0.5">${videoData.views} • ${videoData.ago}</p>
                 </div>`;
             
             document.getElementById('videoGrid').insertAdjacentHTML('beforeend', html);
@@ -239,10 +220,14 @@
 
         function formatViews(num) {
             if(!num) return '';
-            if(num >= 1000000000) return Math.floor(num/1000000000) + 'B';
-            if(num >= 1000000) return Math.floor(num/1000000) + 'M';
-            if(num >= 1000) return Math.floor(num/1000) + 'K';
-            return num;
+            // Se já vier formatado (string com M/K), retorna direto
+            if(typeof num === 'string' && (num.includes('M') || num.includes('K'))) return num;
+            
+            // Se for número
+            if(num >= 1000000000) return Math.floor(num/1000000000) + 'B views';
+            if(num >= 1000000) return Math.floor(num/1000000) + 'M views';
+            if(num >= 1000) return Math.floor(num/1000) + 'K views';
+            return num + ' views';
         }
 
         function escapeHtml(text) {
@@ -253,9 +238,9 @@
         window.onscroll = () => {
             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
                 if(!isLoading && currentQuery === "Destaques") {
-                    // Carrega mais termos aleatórios
-                    const randomTerm = initialTerms[Math.floor(Math.random() * initialTerms.length)];
-                    realizarPesquisa(randomTerm + " music", false);
+                    // Carrega mais termos aleatórios se for a home
+                    const randomTerm = initialTerms[Math.floor(Math.random() * initialTerms.length)] + " 2024";
+                    realizarPesquisa(randomTerm, false);
                 }
             }
         };
