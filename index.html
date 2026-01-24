@@ -9,32 +9,51 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#080808">
     
+    <link rel="manifest" href='data:application/manifest+json,{"name":"RedPlay Pro","short_name":"RedPlay","start_url":".","display":"standalone","background_color":"#080808","theme_color":"#ff0000"}'>
+
     <title>REDPLAY Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.youtube.com/iframe_api"></script>
     
     <style>
-        * { -webkit-tap-highlight-color: transparent; }
-        body { background-color: #080808; color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
+        /* RESET PARA COMPORTAMENTO NATIVO */
+        * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
+        input { user-select: auto !important; }
+        
+        body { 
+            background-color: #080808; color: white; font-family: sans-serif; 
+            margin: 0; overflow-x: hidden; overscroll-behavior-y: contain;
+            padding-top: env(safe-area-inset-top);
+        }
+
         .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .cat-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000; background-size: cover; }
+        
+        /* PLAYER EM TELA CHEIA */
         #playerWrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5000; display: none; background: black; }
+        
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .player-controls { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 20px; z-index: 5500; background: rgba(0,0,0,0.6); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        
+        .player-controls { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; align-items: center; justify-content: center; 
+            gap: 20px; z-index: 5500; background: rgba(0,0,0,0.6); 
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; 
+        }
         .player-controls.active { opacity: 1; pointer-events: auto; }
-        .control-btn { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .control-btn { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
 
-    <nav class="fixed top-0 w-full bg-[#080808]/90 backdrop-blur-md z-[3000] flex items-center justify-between px-4 h-16 border-b border-zinc-900">
+    <nav class="fixed top-0 w-full bg-[#080808]/90 backdrop-blur-md z-[3000] flex items-center justify-between px-4 h-20 border-b border-zinc-900">
         <div class="flex items-center gap-2" onclick="voltarHome()">
             <div class="redplay-logo"><i class="fa-solid fa-play text-white text-xs"></i></div>
             <span class="text-xl font-black uppercase tracking-tighter">RedPlay</span>
         </div>
         <div class="flex-1 max-w-[400px] mx-4">
-            <div class="flex bg-zinc-900 border border-zinc-800 rounded-full px-4 py-1.5 focus-within:border-red-600">
+            <div class="flex bg-zinc-900 border border-zinc-800 rounded-full px-4 py-2 focus-within:border-red-600">
                 <input id="searchInput" type="text" placeholder="Pesquisar..." class="bg-transparent w-full outline-none text-sm text-white">
                 <button id="searchBtn" class="ml-2 text-zinc-400"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
@@ -42,7 +61,7 @@
         <div id="avatar" class="cat-avatar"></div>
     </nav>
 
-    <main class="pt-24 pb-10 p-4 lg:p-8 max-w-[2000px] mx-auto">
+    <main class="pt-28 pb-10 p-4 lg:p-8 max-w-[2000px] mx-auto">
         <div id="historySection" class="hidden mb-10">
             <h2 class="text-xs font-bold text-red-500 mb-4 uppercase tracking-widest">Assistidos recentemente</h2>
             <div id="historyGrid" class="flex gap-4 overflow-x-auto no-scrollbar pb-2"></div>
@@ -57,7 +76,9 @@
 
     <div id="playerWrapper">
         <div class="relative w-full h-full" onclick="toggleControls()">
-            <div class="absolute top-5 left-5 z-[6000]"><button onclick="closePlayer()" class="w-10 h-10 bg-black/60 rounded-full text-red-500 flex items-center justify-center border border-white/10"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="absolute top-10 left-5 z-[6000]">
+                <button onclick="closePlayer()" class="w-12 h-12 bg-black/60 rounded-full text-red-500 flex items-center justify-center border border-white/10"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
             <div class="player-controls" id="customControls">
                 <button onclick="event.stopPropagation(); seekVideo(-10)" class="control-btn"><i class="fa-solid fa-rotate-left"></i></button>
                 <button onclick="event.stopPropagation(); playPrev()" class="control-btn"><i class="fa-solid fa-backward"></i></button>
@@ -84,7 +105,6 @@
                 document.getElementById('videoGrid').innerHTML = "";
                 videoPool = [];
                 currentSearch = query;
-                // Se a busca for diferente de "Destaques", esconde o histórico
                 if(query !== "Destaques") {
                     document.getElementById('historySection').classList.add('hidden');
                     isHome = false;
@@ -110,7 +130,7 @@
             videoPool.push(videoData);
             document.getElementById('videoGrid').insertAdjacentHTML('beforeend', `
                 <div class="cursor-pointer group" onclick="saveAndPlay('${videoData.id}', \`${videoData.title.replace(/'/g, "")}\`, '${videoData.thumb}')">
-                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800"><img src="${videoData.thumb}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${videoData.duration}</span></div>
+                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800"><img src="${videoData.thumb}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500"><span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${videoData.duration}</span></div>
                     <h3 class="font-bold text-sm line-clamp-2">${videoData.title}</h3>
                     <p class="text-zinc-500 text-xs mt-1">${videoData.artist}</p>
                 </div>`);
@@ -128,7 +148,7 @@
         function openPlayer(id) {
             document.getElementById('playerWrapper').style.display = 'block';
             if (player?.loadVideoById) player.loadVideoById(id);
-            else player = new YT.Player('ytPlayer', { height:'100%', width:'100%', videoId: id, playerVars: { 'autoplay': 1, 'playsinline': 1 }, events: { 'onStateChange': (e) => { if(e.data === 0) playNext(); } } });
+            else player = new YT.Player('ytPlayer', { height:'100%', width:'100%', videoId: id, playerVars: { 'autoplay': 1, 'playsinline': 1, 'modestbranding': 1 }, events: { 'onStateChange': (e) => { if(e.data === 0) playNext(); } } });
             document.body.style.overflow = 'hidden';
         }
 
@@ -156,6 +176,8 @@
 
         document.getElementById('searchBtn').onclick = () => realizarPesquisa(document.getElementById('searchInput').value, true);
         document.getElementById('searchInput').onkeypress = (e) => { if(e.key === 'Enter') realizarPesquisa(e.target.value, true); };
+        
+        // SCROLL INFINITO (REATIVADO E CORRIGIDO)
         window.onscroll = () => { if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 900 && !isLoading) realizarPesquisa(currentSearch, false); };
     </script>
 </body>
