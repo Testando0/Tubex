@@ -15,40 +15,32 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     
     <style>
-        * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+        * { -webkit-tap-highlight-color: transparent; }
         body { 
             background-color: #080808; color: white; font-family: sans-serif; 
-            margin: 0; overflow-x: hidden; overscroll-behavior-y: contain;
+            margin: 0; overflow-x: hidden;
         }
 
-        /* Estilo da Logo e Avatar */
+        /* Layout Base */
         .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
         .cat-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000; background-size: cover; background-position: center; }
         
-        /* Ajuste do Player para não cobrir a Home no início */
+        /* PLAYER - Começa totalmente invisível */
         #playerWrapper { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 5000; display: none; /* Escondido por padrão */
+            z-index: 5000; display: none; background: black;
         }
-        #playerWrapper.active { display: block; }
 
-        #playerContainer { transition: all 0.4s ease; background: black; overflow: hidden; }
-        .full-player { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; }
+        #playerContainer { transition: all 0.4s ease; background: black; position: relative; width: 100%; height: 100%; }
         
-        .mini-player { 
-            position: fixed !important; bottom: env(safe-area-inset-bottom); right: 0;
-            width: 100% !important; height: 80px !important; 
-            border-top: 2px solid #ff0000; z-index: 5001;
-        }
-
         /* Controles do Player */
         .player-controls {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
             gap: 20px; z-index: 5500; background: rgba(0,0,0,0.6);
-            opacity: 0; transition: opacity 0.3s;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
-        .player-controls.show { opacity: 1; }
+        .player-controls.active { opacity: 1; pointer-events: auto; }
         
         .control-btn {
             width: 50px; height: 50px; border-radius: 50%;
@@ -58,7 +50,6 @@
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        input { user-select: auto !important; }
     </style>
 </head>
 <body>
@@ -80,12 +71,11 @@
 
     <main class="pt-24 pb-10 p-4 lg:p-8 max-w-[2000px] mx-auto">
         <div id="historySection" class="hidden mb-10">
-            <h2 class="text-xs font-bold text-red-500 mb-4 uppercase tracking-widest">Continuar assistindo</h2>
+            <h2 class="text-xs font-bold text-red-500 mb-4 uppercase tracking-widest">Recentes</h2>
             <div id="historyGrid" class="flex gap-4 overflow-x-auto no-scrollbar pb-2"></div>
         </div>
 
-        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10">
-            </div>
+        <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10"></div>
         
         <div id="loaderScroll" class="py-10 text-center opacity-0 transition-opacity">
             <div class="inline-block w-8 h-8 border-2 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div>
@@ -93,10 +83,9 @@
     </main>
 
     <div id="playerWrapper">
-        <div id="playerContainer" class="full-player" onclick="toggleControls()">
+        <div id="playerContainer" onclick="toggleControls()">
             <div class="absolute top-5 left-5 z-[6000] flex gap-3">
                 <button onclick="closePlayer()" class="w-10 h-10 bg-black/60 rounded-full text-red-500 flex items-center justify-center border border-white/10"><i class="fa-solid fa-xmark"></i></button>
-                <button onclick="minimizePlayer()" class="w-10 h-10 bg-black/60 rounded-full text-white flex items-center justify-center border border-white/10"><i class="fa-solid fa-compress"></i></button>
             </div>
 
             <div class="player-controls" id="customControls">
@@ -111,16 +100,19 @@
     </div>
 
     <script>
+        // Avatar aleatório
         document.getElementById('avatar').style.backgroundImage = `url('https://cataas.com/cat?width=100&t=${Math.random()}')`;
 
         let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false;
         let currentIndex = -1, controlTimer;
 
+        // Inicia o App
         function onYouTubeIframeAPIReady() {
             renderHistory();
-            realizarPesquisa("Destaques", true);
+            realizarPesquisa("Músicas em alta", true);
         }
 
+        // Função de Pesquisa (Nova API)
         async function realizarPesquisa(query, limpar = true) {
             if (isLoading && !limpar) return;
             isLoading = true;
@@ -129,11 +121,12 @@
             if(limpar) {
                 document.getElementById('videoGrid').innerHTML = "";
                 videoPool = [];
+                window.scrollTo(0,0);
             }
 
             try {
-                const targetUrl = `https://redzinapi-tech.onrender.com/youtube/search?query=${encodeURIComponent(query)}&apikey=REDZ`;
-                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+                const apiURL = `https://redzinapi-tech.onrender.com/youtube/search?query=${encodeURIComponent(query)}&apikey=REDZ`;
+                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(apiURL)}`);
                 const data = await response.json();
 
                 if (data.status && data.resultado) {
@@ -143,26 +136,26 @@
                         }
                     });
                 }
-            } catch (error) { console.error("Erro na API"); }
+            } catch (error) { console.error("Erro na busca"); }
             
             isLoading = false;
             document.getElementById('loaderScroll').style.opacity = "0";
         }
 
+        // Renderiza vídeo na grade
         function addVideoToGrid(v) {
             const videoData = {
                 id: v.videoId, title: v.title, 
                 thumb: v.thumbnail || v.image, 
                 artist: v.author?.name || 'YouTube',
-                duration: v.timestamp || "--:--",
-                views: v.views
+                duration: v.timestamp || "--:--"
             };
             videoPool.push(videoData);
             
             const html = `
-                <div class="cursor-pointer group" onclick="saveAndPlay('${videoData.id}', \`${escapeHtml(videoData.title)}\`, '${videoData.thumb}', \`${escapeHtml(videoData.artist)}\`)">
-                    <div class="relative aspect-square rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
-                        <img src="${videoData.thumb}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                <div class="cursor-pointer group" onclick="saveAndPlay('${videoData.id}', \`${escapeHtml(videoData.title)}\`, '${videoData.thumb}')">
+                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
+                        <img src="${videoData.thumb}" class="w-full h-full object-cover">
                         <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${videoData.duration}</span>
                     </div>
                     <h3 class="font-bold text-sm line-clamp-2">${videoData.title}</h3>
@@ -171,9 +164,10 @@
             document.getElementById('videoGrid').insertAdjacentHTML('beforeend', html);
         }
 
-        function escapeHtml(text) { return text ? text.replace(/'/g, "\\'").replace(/"/g, '\\"') : ""; }
+        function escapeHtml(text) { return text ? text.replace(/'/g, "").replace(/"/g, "") : ""; }
 
-        function saveAndPlay(id, title, thumb, artist) {
+        // Salva histórico e abre player
+        function saveAndPlay(id, title, thumb) {
             currentIndex = videoPool.findIndex(v => v.id === id);
             history = history.filter(v => v.id !== id);
             history.unshift({id, title, thumb});
@@ -182,9 +176,10 @@
             openPlayer(id);
         }
 
+        // Abre o player em tela cheia
         function openPlayer(id) {
             const wrap = document.getElementById('playerWrapper');
-            wrap.classList.add('active');
+            wrap.style.display = 'block';
             if (player?.loadVideoById) {
                 player.loadVideoById(id);
             } else {
@@ -194,33 +189,31 @@
                     events: { 'onStateChange': (e) => { if(e.data === 0) playNext(); } }
                 });
             }
-            document.getElementById('playerContainer').className = "full-player";
             document.body.style.overflow = 'hidden';
         }
 
-        function minimizePlayer() {
-            document.getElementById('playerContainer').className = "mini-player";
-            document.body.style.overflow = 'auto';
-        }
-
+        // Fecha o player
         function closePlayer() {
             if(player?.stopVideo) player.stopVideo();
-            document.getElementById('playerWrapper').classList.remove('active');
+            document.getElementById('playerWrapper').style.display = 'none';
             document.body.style.overflow = 'auto';
         }
 
+        // Controles de vídeo
         function toggleControls() {
             const c = document.getElementById('customControls');
-            c.classList.add('show');
+            c.classList.toggle('active');
             clearTimeout(controlTimer);
-            controlTimer = setTimeout(() => c.classList.remove('show'), 3000);
+            if(c.classList.contains('active')) {
+                controlTimer = setTimeout(() => c.classList.remove('active'), 3000);
+            }
         }
 
         function seekVideo(sec) { if(player) player.seekTo(player.getCurrentTime() + sec, true); }
-        function playNext() { if(currentIndex < videoPool.length - 1) { currentIndex++; playVideoFromPool(); } }
-        function playPrev() { if(currentIndex > 0) { currentIndex--; playVideoFromPool(); } }
-        function playVideoFromPool() { const v = videoPool[currentIndex]; openPlayer(v.id); }
+        function playNext() { if(currentIndex < videoPool.length - 1) { currentIndex++; openPlayer(videoPool[currentIndex].id); } }
+        function playPrev() { if(currentIndex > 0) { currentIndex--; openPlayer(videoPool[currentIndex].id); } }
 
+        // Renderiza Histórico
         function renderHistory() {
             const grid = document.getElementById('historyGrid');
             if(history.length === 0) return;
@@ -233,9 +226,11 @@
             `).join('');
         }
 
+        // Eventos de Busca
         document.getElementById('searchBtn').onclick = () => realizarPesquisa(document.getElementById('searchInput').value, true);
         document.getElementById('searchInput').onkeypress = (e) => { if(e.key === 'Enter') realizarPesquisa(e.target.value, true); };
 
+        // Scroll infinito
         window.onscroll = () => {
             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800 && !isLoading) {
                 realizarPesquisa(document.getElementById('searchInput').value || "Música", false);
