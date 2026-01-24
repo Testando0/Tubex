@@ -23,18 +23,17 @@
         .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
         .cat-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000; background-size: cover; background-position: center; cursor: pointer; }
         
-        /* Ajuste crucial para permitir scroll com player aberto */
         #playerWrapper { 
             position: fixed; 
             top: 0; left: 0; 
             width: 100%; height: 100%; 
             z-index: 5000; 
-            pointer-events: none; /* Deixa cliques passarem para o fundo */
+            pointer-events: none;
         }
 
         #playerContainer { 
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            pointer-events: auto; /* Reativa cliques apenas no player */
+            pointer-events: auto;
             background: black;
             overflow: hidden;
         }
@@ -43,7 +42,7 @@
         
         .mini-player { 
             position: fixed !important; 
-            bottom: 20px; right: 20px; /* Mudado para direita para não cobrir menus comuns */
+            bottom: 20px; right: 20px;
             width: 300px !important; height: 170px !important; 
             border-radius: 12px; 
             border: 2px solid #ff0000; 
@@ -56,7 +55,6 @@
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* Controles Centrais */
         .player-controls {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -130,7 +128,7 @@
 
         let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false;
         let currentQuery = "Destaques", currentIndex = -1, controlTimer;
-        const infiniteThemes = ["musicas", "hits", "pop", "funk", "trap", "viral"];
+        const infiniteThemes = ["musicas", "hits", "pop", "funk", "trap", "viral", "remix", "live", "oficial"];
 
         function onYouTubeIframeAPIReady() { renderHistory(); realizarPesquisa("Destaques", true); }
 
@@ -143,36 +141,80 @@
             loader.style.opacity = "1";
 
             if(limpar) { 
-                grid.innerHTML = ""; videoPool = []; window.scrollTo(0,0); currentQuery = query;
+                grid.innerHTML = ""; 
+                videoPool = []; 
+                window.scrollTo(0,0); 
+                currentQuery = query;
                 histSection.className = (query === "Destaques" && history.length > 0) ? "mb-10" : "hidden";
             }
 
             try {
+                // Adiciona variação para scroll infinito
                 const searchParam = limpar ? query : `${query} ${infiniteThemes[Math.floor(Math.random()*infiniteThemes.length)]}`;
-                const response = await fetch(`https://delirius-apiofc.vercel.app/search/searchtrack?q=${encodeURIComponent(searchParam)}`);
+                
+                // Chama API Vreden para buscar vídeos
+                const response = await fetch(`https://api.vreden.my.id/api/v1/download/play/video?query=${encodeURIComponent(searchParam)}`);
                 const data = await response.json();
                 
-                if (Array.isArray(data)) {
-                    data.forEach(v => {
-                        if(!videoPool.find(item => item.id === v.id)) {
-                            videoPool.push({id: v.id, title: v.title, thumb: v.image, artist: v.artist});
-                            grid.insertAdjacentHTML('beforeend', `
-                                <div class="cursor-pointer group animate-in fade-in duration-500" onclick="saveAndPlay('${v.id}', '${v.title.replace(/'/g,"")}', '${v.image}', '${v.artist}')">
-                                    <div class="relative aspect-square rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
-                                        <img src="${v.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.duration.label}</span>
-                                    </div>
-                                    <h3 class="font-bold text-sm line-clamp-1 group-hover:text-red-500 transition">${v.title}</h3>
-                                    <p class="text-zinc-500 text-xs mt-1">${v.artist}</p>
-                                </div>`);
+                if (data.status && data.result && data.result.metadata) {
+                    const v = data.result.metadata;
+                    
+                    // Verifica se o vídeo já existe no pool
+                    if(!videoPool.find(item => item.id === v.videoId)) {
+                        videoPool.push({
+                            id: v.videoId, 
+                            title: v.title, 
+                            thumb: v.thumbnail || v.image, 
+                            artist: v.author.name,
+                            duration: v.timestamp,
+                            views: formatViews(v.views)
+                        });
+                        
+                        grid.insertAdjacentHTML('beforeend', `
+                            <div class="cursor-pointer group animate-in fade-in duration-500" onclick="saveAndPlay('${v.videoId}', \`${escapeHtml(v.title)}\`, '${v.thumbnail || v.image}', \`${escapeHtml(v.author.name)}\`)">
+                                <div class="relative aspect-square rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
+                                    <img src="${v.thumbnail || v.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
+                                    <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${v.timestamp}</span>
+                                </div>
+                                <h3 class="font-bold text-sm line-clamp-2 group-hover:text-red-500 transition">${v.title}</h3>
+                                <p class="text-zinc-500 text-xs mt-1">${v.author.name}</p>
+                                <p class="text-zinc-600 text-[10px] mt-0.5">${formatViews(v.views)} • ${v.ago}</p>
+                            </div>`);
+                    }
+                    
+                    // Busca mais vídeos relacionados automaticamente
+                    if(limpar) {
+                        for(let i = 0; i < 9; i++) {
+                            setTimeout(() => realizarPesquisa(searchParam, false), i * 200);
                         }
-                    });
+                    }
                 }
-            } catch(e) { console.error(e); } finally { isLoading = false; loader.style.opacity = "0"; }
+            } catch(e) { 
+                console.error('Erro ao buscar vídeos:', e); 
+            } finally { 
+                isLoading = false; 
+                loader.style.opacity = "0"; 
+            }
+        }
+
+        // Formatar número de views
+        function formatViews(num) {
+            if(!num) return '0 views';
+            if(num >= 1000000000) return Math.floor(num/1000000000) + 'B views';
+            if(num >= 1000000) return Math.floor(num/1000000) + 'M views';
+            if(num >= 1000) return Math.floor(num/1000) + 'K views';
+            return num + ' views';
+        }
+
+        // Escapar HTML para evitar XSS
+        function escapeHtml(text) {
+            return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
         }
 
         window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) realizarPesquisa(currentQuery, false);
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
+                realizarPesquisa(currentQuery, false);
+            }
         };
 
         function saveAndPlay(id, title, thumb, artist) {
@@ -187,7 +229,13 @@
         function openPlayer(id) {
             document.getElementById('playerWrapper').classList.remove('hidden');
             if (player && player.loadVideoById) player.loadVideoById(id);
-            else player = new YT.Player('ytPlayer', { height:'100%', width:'100%', videoId:id, playerVars:{'autoplay':1, 'rel':0}, events:{'onStateChange':(e)=>e.data===0 && playNext()} });
+            else player = new YT.Player('ytPlayer', { 
+                height:'100%', 
+                width:'100%', 
+                videoId:id, 
+                playerVars:{'autoplay':1, 'rel':0, 'controls':1}, 
+                events:{'onStateChange':(e)=>e.data===0 && playNext()} 
+            });
             setFull();
         }
 
@@ -196,14 +244,16 @@
         function playNext() { 
             if(currentIndex < videoPool.length-1) { 
                 currentIndex++; 
-                player.loadVideoById(videoPool[currentIndex].id); 
+                const next = videoPool[currentIndex];
+                saveAndPlay(next.id, next.title, next.thumb, next.artist);
             } 
         }
         
         function playPrev() { 
             if(currentIndex > 0) { 
                 currentIndex--; 
-                player.loadVideoById(videoPool[currentIndex].id); 
+                const prev = videoPool[currentIndex];
+                saveAndPlay(prev.id, prev.title, prev.thumb, prev.artist);
             } 
         }
 
@@ -218,10 +268,10 @@
             const container = document.getElementById('playerContainer');
             if(container.className.includes('full-player')) {
                 container.className = "mini-player";
-                document.body.style.overflow = 'auto'; // Reativa scroll
+                document.body.style.overflow = 'auto';
             } else {
                 container.className = "full-player";
-                document.body.style.overflow = 'hidden'; // Trava scroll
+                document.body.style.overflow = 'hidden';
             }
         }
 
@@ -239,11 +289,26 @@
         function renderHistory() {
             const grid = document.getElementById('historyGrid');
             if(!grid || history.length === 0) return;
-            grid.innerHTML = history.map(v => `<div class="min-w-[140px] cursor-pointer" onclick="openPlayer('${v.id}')"><div class="relative aspect-square rounded-xl overflow-hidden mb-2 border border-zinc-800"><img src="${v.thumbnail}" class="w-full h-full object-cover"></div><h4 class="text-[11px] font-bold line-clamp-1">${v.title}</h4></div>`).join('');
+            grid.innerHTML = history.map(v => `
+                <div class="min-w-[140px] cursor-pointer" onclick="openPlayer('${v.id}')">
+                    <div class="relative aspect-square rounded-xl overflow-hidden mb-2 border border-zinc-800">
+                        <img src="${v.thumbnail}" class="w-full h-full object-cover" loading="lazy">
+                    </div>
+                    <h4 class="text-[11px] font-bold line-clamp-1">${v.title}</h4>
+                </div>
+            `).join('');
         }
 
-        document.getElementById('searchBtn').onclick = () => realizarPesquisa(document.getElementById('searchInput').value, true);
-        document.getElementById('searchInput').onkeypress = (e) => e.key === 'Enter' && realizarPesquisa(e.target.value, true);
+        document.getElementById('searchBtn').onclick = () => {
+            const query = document.getElementById('searchInput').value;
+            if(query.trim()) realizarPesquisa(query, true);
+        };
+        
+        document.getElementById('searchInput').onkeypress = (e) => {
+            if(e.key === 'Enter' && e.target.value.trim()) {
+                realizarPesquisa(e.target.value, true);
+            }
+        };
     </script>
 </body>
 </html>
