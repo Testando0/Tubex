@@ -16,50 +16,23 @@
     
     <style>
         * { -webkit-tap-highlight-color: transparent; }
-        body { 
-            background-color: #080808; color: white; font-family: sans-serif; 
-            margin: 0; overflow-x: hidden;
-        }
-
-        /* Layout Base */
-        .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-        .cat-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000; background-size: cover; background-position: center; }
-        
-        /* PLAYER - Começa totalmente invisível */
-        #playerWrapper { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 5000; display: none; background: black;
-        }
-
-        #playerContainer { transition: all 0.4s ease; background: black; position: relative; width: 100%; height: 100%; }
-        
-        /* Controles do Player */
-        .player-controls {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            gap: 20px; z-index: 5500; background: rgba(0,0,0,0.6);
-            opacity: 0; transition: opacity 0.3s; pointer-events: none;
-        }
-        .player-controls.active { opacity: 1; pointer-events: auto; }
-        
-        .control-btn {
-            width: 50px; height: 50px; border-radius: 50%;
-            background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; color: white; border: 1px solid rgba(255,255,255,0.1);
-        }
-
+        body { background-color: #080808; color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
+        .redplay-logo { background: linear-gradient(135deg, #ff0000, #990000); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cat-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000; background-size: cover; }
+        #playerWrapper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5000; display: none; background: black; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .player-controls { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 20px; z-index: 5500; background: rgba(0,0,0,0.6); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .player-controls.active { opacity: 1; pointer-events: auto; }
+        .control-btn { width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
 
     <nav class="fixed top-0 w-full bg-[#080808]/90 backdrop-blur-md z-[3000] flex items-center justify-between px-4 h-16 border-b border-zinc-900">
-        <div class="flex items-center gap-2" onclick="location.reload()">
+        <div class="flex items-center gap-2" onclick="voltarHome()">
             <div class="redplay-logo"><i class="fa-solid fa-play text-white text-xs"></i></div>
             <span class="text-xl font-black uppercase tracking-tighter">RedPlay</span>
         </div>
-        
         <div class="flex-1 max-w-[400px] mx-4">
             <div class="flex bg-zinc-900 border border-zinc-800 rounded-full px-4 py-1.5 focus-within:border-red-600">
                 <input id="searchInput" type="text" placeholder="Pesquisar..." class="bg-transparent w-full outline-none text-sm text-white">
@@ -71,7 +44,7 @@
 
     <main class="pt-24 pb-10 p-4 lg:p-8 max-w-[2000px] mx-auto">
         <div id="historySection" class="hidden mb-10">
-            <h2 class="text-xs font-bold text-red-500 mb-4 uppercase tracking-widest">Recentes</h2>
+            <h2 class="text-xs font-bold text-red-500 mb-4 uppercase tracking-widest">Assistidos recentemente</h2>
             <div id="historyGrid" class="flex gap-4 overflow-x-auto no-scrollbar pb-2"></div>
         </div>
 
@@ -83,159 +56,107 @@
     </main>
 
     <div id="playerWrapper">
-        <div id="playerContainer" onclick="toggleControls()">
-            <div class="absolute top-5 left-5 z-[6000] flex gap-3">
-                <button onclick="closePlayer()" class="w-10 h-10 bg-black/60 rounded-full text-red-500 flex items-center justify-center border border-white/10"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
+        <div class="relative w-full h-full" onclick="toggleControls()">
+            <div class="absolute top-5 left-5 z-[6000]"><button onclick="closePlayer()" class="w-10 h-10 bg-black/60 rounded-full text-red-500 flex items-center justify-center border border-white/10"><i class="fa-solid fa-xmark"></i></button></div>
             <div class="player-controls" id="customControls">
                 <button onclick="event.stopPropagation(); seekVideo(-10)" class="control-btn"><i class="fa-solid fa-rotate-left"></i></button>
                 <button onclick="event.stopPropagation(); playPrev()" class="control-btn"><i class="fa-solid fa-backward"></i></button>
                 <button onclick="event.stopPropagation(); playNext()" class="control-btn"><i class="fa-solid fa-forward"></i></button>
                 <button onclick="event.stopPropagation(); seekVideo(10)" class="control-btn"><i class="fa-solid fa-rotate-right"></i></button>
             </div>
-
             <div id="ytPlayer"></div>
         </div>
     </div>
 
     <script>
-        // Avatar aleatório
-        document.getElementById('avatar').style.backgroundImage = `url('https://cataas.com/cat?width=100&t=${Math.random()}')`;
-
+        document.getElementById('avatar').style.backgroundImage = `url('https://cataas.com/cat?t=${Math.random()}')`;
         let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false;
-        let currentIndex = -1, controlTimer;
+        let currentIndex = -1, controlTimer, currentSearch = "Destaques", isHome = true;
 
-        // Inicia o App
-        function onYouTubeIframeAPIReady() {
-            renderHistory();
-            realizarPesquisa("Músicas em alta", true);
-        }
+        function onYouTubeIframeAPIReady() { renderHistory(); realizarPesquisa("Destaques", true); }
 
-        // Função de Pesquisa (Nova API)
         async function realizarPesquisa(query, limpar = true) {
-            if (isLoading && !limpar) return;
+            if (isLoading) return;
             isLoading = true;
             document.getElementById('loaderScroll').style.opacity = "1";
 
             if(limpar) {
                 document.getElementById('videoGrid').innerHTML = "";
                 videoPool = [];
-                window.scrollTo(0,0);
+                currentSearch = query;
+                // Se a busca for diferente de "Destaques", esconde o histórico
+                if(query !== "Destaques") {
+                    document.getElementById('historySection').classList.add('hidden');
+                    isHome = false;
+                }
             }
 
             try {
                 const apiURL = `https://redzinapi-tech.onrender.com/youtube/search?query=${encodeURIComponent(query)}&apikey=REDZ`;
                 const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(apiURL)}`);
                 const data = await response.json();
-
-                if (data.status && data.resultado) {
+                if (data.resultado) {
                     data.resultado.forEach(v => {
-                        if (v.type === 'video' && !videoPool.find(item => item.id === v.videoId)) {
-                            addVideoToGrid(v);
-                        }
+                        if (v.type === 'video' && !videoPool.find(item => item.id === v.videoId)) addVideoToGrid(v);
                     });
                 }
-            } catch (error) { console.error("Erro na busca"); }
-            
+            } catch (e) { console.error(e); }
             isLoading = false;
             document.getElementById('loaderScroll').style.opacity = "0";
         }
 
-        // Renderiza vídeo na grade
         function addVideoToGrid(v) {
-            const videoData = {
-                id: v.videoId, title: v.title, 
-                thumb: v.thumbnail || v.image, 
-                artist: v.author?.name || 'YouTube',
-                duration: v.timestamp || "--:--"
-            };
+            const videoData = { id: v.videoId, title: v.title, thumb: v.thumbnail || v.image, artist: v.author?.name || 'YouTube', duration: v.timestamp || "--:--" };
             videoPool.push(videoData);
-            
-            const html = `
-                <div class="cursor-pointer group" onclick="saveAndPlay('${videoData.id}', \`${escapeHtml(videoData.title)}\`, '${videoData.thumb}')">
-                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
-                        <img src="${videoData.thumb}" class="w-full h-full object-cover">
-                        <span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${videoData.duration}</span>
-                    </div>
+            document.getElementById('videoGrid').insertAdjacentHTML('beforeend', `
+                <div class="cursor-pointer group" onclick="saveAndPlay('${videoData.id}', \`${videoData.title.replace(/'/g, "")}\`, '${videoData.thumb}')">
+                    <div class="relative aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800"><img src="${videoData.thumb}" class="w-full h-full object-cover"><span class="absolute bottom-2 right-2 bg-black/90 px-2 py-0.5 rounded text-[10px] font-bold text-red-500">${videoData.duration}</span></div>
                     <h3 class="font-bold text-sm line-clamp-2">${videoData.title}</h3>
                     <p class="text-zinc-500 text-xs mt-1">${videoData.artist}</p>
-                </div>`;
-            document.getElementById('videoGrid').insertAdjacentHTML('beforeend', html);
+                </div>`);
         }
 
-        function escapeHtml(text) { return text ? text.replace(/'/g, "").replace(/"/g, "") : ""; }
-
-        // Salva histórico e abre player
         function saveAndPlay(id, title, thumb) {
             currentIndex = videoPool.findIndex(v => v.id === id);
             history = history.filter(v => v.id !== id);
             history.unshift({id, title, thumb});
-            localStorage.setItem('rp_history', JSON.stringify(history.slice(0,10)));
-            renderHistory();
+            localStorage.setItem('rp_history', JSON.stringify(history.slice(0,12)));
+            if(isHome) renderHistory();
             openPlayer(id);
         }
 
-        // Abre o player em tela cheia
         function openPlayer(id) {
-            const wrap = document.getElementById('playerWrapper');
-            wrap.style.display = 'block';
-            if (player?.loadVideoById) {
-                player.loadVideoById(id);
-            } else {
-                player = new YT.Player('ytPlayer', {
-                    height:'100%', width:'100%', videoId: id,
-                    playerVars: { 'autoplay': 1, 'playsinline': 1, 'modestbranding': 1 },
-                    events: { 'onStateChange': (e) => { if(e.data === 0) playNext(); } }
-                });
-            }
+            document.getElementById('playerWrapper').style.display = 'block';
+            if (player?.loadVideoById) player.loadVideoById(id);
+            else player = new YT.Player('ytPlayer', { height:'100%', width:'100%', videoId: id, playerVars: { 'autoplay': 1, 'playsinline': 1 }, events: { 'onStateChange': (e) => { if(e.data === 0) playNext(); } } });
             document.body.style.overflow = 'hidden';
         }
 
-        // Fecha o player
-        function closePlayer() {
-            if(player?.stopVideo) player.stopVideo();
-            document.getElementById('playerWrapper').style.display = 'none';
-            document.body.style.overflow = 'auto';
+        function closePlayer() { if(player?.stopVideo) player.stopVideo(); document.getElementById('playerWrapper').style.display = 'none'; document.body.style.overflow = 'auto'; }
+        
+        function voltarHome() {
+            document.getElementById('searchInput').value = "";
+            isHome = true;
+            renderHistory();
+            realizarPesquisa("Destaques", true);
         }
 
-        // Controles de vídeo
-        function toggleControls() {
-            const c = document.getElementById('customControls');
-            c.classList.toggle('active');
-            clearTimeout(controlTimer);
-            if(c.classList.contains('active')) {
-                controlTimer = setTimeout(() => c.classList.remove('active'), 3000);
-            }
+        function renderHistory() {
+            const section = document.getElementById('historySection');
+            if(history.length > 0 && isHome) {
+                section.classList.remove('hidden');
+                document.getElementById('historyGrid').innerHTML = history.map(v => `<div class="min-w-[120px] max-w-[120px] cursor-pointer" onclick="openPlayer('${v.id}')"><img src="${v.thumb}" class="w-full aspect-square object-cover rounded-xl border border-zinc-800"><p class="text-[10px] mt-1 line-clamp-1">${v.title}</p></div>`).join('');
+            } else { section.classList.add('hidden'); }
         }
 
+        function toggleControls() { const c = document.getElementById('customControls'); c.classList.toggle('active'); clearTimeout(controlTimer); if(c.classList.contains('active')) controlTimer = setTimeout(() => c.classList.remove('active'), 3000); }
         function seekVideo(sec) { if(player) player.seekTo(player.getCurrentTime() + sec, true); }
         function playNext() { if(currentIndex < videoPool.length - 1) { currentIndex++; openPlayer(videoPool[currentIndex].id); } }
         function playPrev() { if(currentIndex > 0) { currentIndex--; openPlayer(videoPool[currentIndex].id); } }
 
-        // Renderiza Histórico
-        function renderHistory() {
-            const grid = document.getElementById('historyGrid');
-            if(history.length === 0) return;
-            document.getElementById('historySection').classList.remove('hidden');
-            grid.innerHTML = history.map(v => `
-                <div class="min-w-[120px] cursor-pointer" onclick="openPlayer('${v.id}')">
-                    <img src="${v.thumb}" class="w-full aspect-square object-cover rounded-xl border border-zinc-800">
-                    <p class="text-[10px] mt-1 line-clamp-1">${v.title}</p>
-                </div>
-            `).join('');
-        }
-
-        // Eventos de Busca
         document.getElementById('searchBtn').onclick = () => realizarPesquisa(document.getElementById('searchInput').value, true);
         document.getElementById('searchInput').onkeypress = (e) => { if(e.key === 'Enter') realizarPesquisa(e.target.value, true); };
-
-        // Scroll infinito
-        window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800 && !isLoading) {
-                realizarPesquisa(document.getElementById('searchInput').value || "Música", false);
-            }
-        };
+        window.onscroll = () => { if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 900 && !isLoading) realizarPesquisa(currentSearch, false); };
     </script>
 </body>
 </html>
