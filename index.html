@@ -3,15 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#080808">
-    
-    <link rel="apple-touch-icon" href="https://uploads.zero-two-apis.com.br/uploads/images/48417970227bd8389b054f1c4823bbf9d4bf0eb3b8965e2e360d0101ca12c7d1.jpg">
-
-    <title>REDPLAY Pro</title>
+    <title>REDPLAY Pro - Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -24,28 +16,21 @@
         .cat-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ff0000; background-size: cover; background-position: center; cursor: pointer; }
         
         #playerWrapper { 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            z-index: 5000; 
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 5000; pointer-events: none;
         }
 
         #playerContainer { 
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            pointer-events: auto;
-            background: black;
-            overflow: hidden;
+            pointer-events: auto; background: black; overflow: hidden;
         }
 
         .full-player { position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh; }
         
         .mini-player { 
-            position: fixed !important; 
-            bottom: 20px; right: 20px;
+            position: fixed !important; bottom: 20px; right: 20px;
             width: 300px !important; height: 170px !important; 
-            border-radius: 12px; 
-            border: 2px solid #ff0000; 
+            border-radius: 12px; border: 2px solid #ff0000; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
         }
 
@@ -56,15 +41,13 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
         .player-controls {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            gap: 20px; z-index: 5500;
-            background: rgba(0,0,0,0.5);
-            opacity: 0; transition: opacity 0.3s;
-            pointer-events: none;
+            gap: 20px; z-index: 5500; background: rgba(0,0,0,0.5);
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
         #playerContainer:hover .player-controls, .player-controls.active { opacity: 1; pointer-events: auto; }
+        
         .control-btn {
             width: 50px; height: 50px; border-radius: 50%;
             background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
@@ -98,6 +81,11 @@
             <div id="historyGrid" class="flex gap-4 overflow-x-auto no-scrollbar pb-2"></div>
         </div>
 
+        <div id="errorMsg" class="hidden text-center text-zinc-500 py-10">
+            <i class="fa-solid fa-circle-exclamation text-4xl mb-2"></i>
+            <p>Nenhum resultado encontrado ou erro na conexão.</p>
+        </div>
+
         <div id="videoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-x-4 gap-y-10"></div>
         
         <div id="loaderScroll" class="py-10 text-center opacity-0 transition-opacity duration-300">
@@ -129,103 +117,112 @@
         let player, videoPool = [], history = JSON.parse(localStorage.getItem('rp_history')) || [], isLoading = false;
         let currentQuery = "Destaques", currentIndex = -1, controlTimer;
         
-        // Temas de fallback para preencher a tela inicial, já que a API só retorna 1 por vez
-        const infiniteThemes = [
-            "vevo 2024", "lofi hip hop", "brasil funk", "trap brasileiro", 
-            "top hits", "rock classics", "sertanejo universitario", 
-            "pop internacional", "eletronica", "workout music"
+        // Termos variados para garantir que a API retorne vídeos diferentes
+        const initialTerms = [
+            "Alok", "Gusttavo Lima", "Anitta", "Marilia Mendonca", 
+            "Linkin Park", "Coldplay", "Eminem", "Bruno Mars", 
+            "The Weeknd", "Dua Lipa", "Imagine Dragons", "Post Malone"
         ];
 
-        function onYouTubeIframeAPIReady() { renderHistory(); realizarPesquisa("Destaques", true); }
+        function onYouTubeIframeAPIReady() { 
+            renderHistory(); 
+            realizarPesquisa("Destaques", true); 
+        }
 
         async function fetchSingleVideo(searchTerm) {
             try {
-                // Adiciona timestamp para evitar cache
-                const url = `https://api.vreden.my.id/api/v1/download/play/video?query=${encodeURIComponent(searchTerm)}&_=${Date.now()}`;
-                const response = await fetch(url);
+                // USA UM PROXY CORS para evitar erro de bloqueio do navegador
+                const targetUrl = `https://api.vreden.my.id/api/v1/download/play/video?query=${encodeURIComponent(searchTerm)}`;
+                // Usando corsproxy.io para passar pelo bloqueio
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                
+                const response = await fetch(proxyUrl);
                 const data = await response.json();
                 
                 if (data.status && data.result && data.result.metadata) {
                     return data.result.metadata;
                 }
             } catch (error) {
-                console.warn("Falha ao buscar termo:", searchTerm, error);
+                console.log("Erro ao buscar termo:", searchTerm);
             }
             return null;
         }
 
         async function realizarPesquisa(query, limpar = true) {
-            if (isLoading && !limpar) return; // Se for limpar, forçamos a busca
+            if (isLoading && !limpar) return;
             isLoading = true;
             
             const loader = document.getElementById('loaderScroll');
             const grid = document.getElementById('videoGrid');
-            const histSection = document.getElementById('historySection');
+            const errorMsg = document.getElementById('errorMsg');
+            
             loader.style.opacity = "1";
+            errorMsg.classList.add('hidden');
 
             if(limpar) { 
                 grid.innerHTML = ""; 
                 videoPool = []; 
                 window.scrollTo(0,0); 
                 currentQuery = query;
-                histSection.className = (history.length > 0) ? "mb-10" : "hidden";
+                document.getElementById('historySection').className = (history.length > 0) ? "mb-10" : "hidden";
             }
 
-            // Lista de termos para buscar
             let searchTerms = [];
 
             if (query === "Destaques") {
-                // Se for tela inicial, pega 12 temas aleatórios
-                searchTerms = infiniteThemes
-                    .sort(() => 0.5 - Math.random()) // Embaralha
-                    .slice(0, 12);
+                // Embaralha e pega 8 termos da lista inicial
+                searchTerms = initialTerms.sort(() => 0.5 - Math.random()).slice(0, 8);
             } else {
-                // Se for busca específica, tenta variações para conseguir mais resultados
-                // Como a API só retorna UM vídeo, precisamos fazer várias chamadas com variações
+                // Cria variações da pesquisa do usuário para tentar obter vídeos diferentes
                 searchTerms = [
                     query,
-                    `${query} official video`,
-                    `${query} lyrics`,
-                    `${query} live`,
-                    `${query} remix`,
-                    `${query} cover`,
-                    `${query} album`,
-                    `${query} hd`
+                    `${query} official`,
+                    `${query} video clip`,
+                    `${query} ao vivo`,
+                    `${query} remix`
                 ];
             }
 
-            // Processa as chamadas em paralelo para ser mais rápido
+            // Faz todas as requisições ao mesmo tempo
             const promises = searchTerms.map(term => fetchSingleVideo(term));
             const results = await Promise.all(promises);
+            
+            let videosAdded = 0;
 
-            // Filtra nulos e adiciona ao grid
             results.forEach(v => {
+                // Verifica duplicatas pelo ID
                 if (v && !videoPool.find(item => item.id === v.videoId)) {
                     addVideoToGrid(v);
+                    videosAdded++;
                 }
             });
+
+            // Se não encontrou nada, tenta uma segunda rodada de busca com o termo puro
+            if (videosAdded === 0 && query !== "Destaques" && limpar) {
+                errorMsg.classList.remove('hidden');
+                errorMsg.innerHTML = `<p>Nada encontrado para "${query}". Tente outro termo.</p>`;
+            } else if (videosAdded === 0 && query === "Destaques") {
+                 // Fallback se a API falhar totalmente
+                 errorMsg.classList.remove('hidden');
+                 errorMsg.innerHTML = `<p>Erro de conexão com a API.</p>`;
+            }
 
             isLoading = false; 
             loader.style.opacity = "0"; 
         }
 
         function addVideoToGrid(v) {
-            // Verifica duplicatas novamente
-            if(videoPool.find(item => item.id === v.videoId)) return;
-
-            // Formata dados
             const videoData = {
                 id: v.videoId, 
                 title: v.title, 
                 thumb: v.thumbnail || v.image, 
                 artist: v.author.name,
-                duration: v.timestamp || v.duration?.timestamp || "00:00",
+                duration: v.timestamp || "VIDEO",
                 views: formatViews(v.views)
             };
 
             videoPool.push(videoData);
             
-            // HTML seguro
             const html = `
                 <div class="cursor-pointer group animate-in fade-in duration-500" onclick="saveAndPlay('${videoData.id}', \`${escapeHtml(videoData.title)}\`, '${videoData.thumb}', \`${escapeHtml(videoData.artist)}\`)">
                     <div class="relative aspect-square rounded-xl overflow-hidden bg-zinc-900 mb-3 border border-zinc-800">
@@ -234,33 +231,31 @@
                     </div>
                     <h3 class="font-bold text-sm line-clamp-2 group-hover:text-red-500 transition">${videoData.title}</h3>
                     <p class="text-zinc-500 text-xs mt-1">${videoData.artist}</p>
-                    <p class="text-zinc-600 text-[10px] mt-0.5">${videoData.views} • ${v.ago || ''}</p>
+                    <p class="text-zinc-600 text-[10px] mt-0.5">${videoData.views} • ${v.ago || 'YouTube'}</p>
                 </div>`;
             
             document.getElementById('videoGrid').insertAdjacentHTML('beforeend', html);
         }
 
-        // Formatar número de views
         function formatViews(num) {
-            if(!num) return '0 views';
-            if(num >= 1000000000) return Math.floor(num/1000000000) + 'B views';
-            if(num >= 1000000) return Math.floor(num/1000000) + 'M views';
-            if(num >= 1000) return Math.floor(num/1000) + 'K views';
-            return num + ' views';
+            if(!num) return '';
+            if(num >= 1000000000) return Math.floor(num/1000000000) + 'B';
+            if(num >= 1000000) return Math.floor(num/1000000) + 'M';
+            if(num >= 1000) return Math.floor(num/1000) + 'K';
+            return num;
         }
 
-        // Escapar HTML para evitar XSS
         function escapeHtml(text) {
             if (!text) return "";
             return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
         }
 
         window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
-                // Scroll infinito simples: busca mais temas aleatórios
-                if(!isLoading) {
-                    const randomTheme = infiniteThemes[Math.floor(Math.random() * infiniteThemes.length)] + " " + Math.floor(Math.random() * 100);
-                    realizarPesquisa(randomTheme, false);
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                if(!isLoading && currentQuery === "Destaques") {
+                    // Carrega mais termos aleatórios
+                    const randomTerm = initialTerms[Math.floor(Math.random() * initialTerms.length)];
+                    realizarPesquisa(randomTerm + " music", false);
                 }
             }
         };
@@ -268,17 +263,12 @@
         function saveAndPlay(id, title, thumb, artist) {
             currentIndex = videoPool.findIndex(v => v.id === id);
             
-            // Atualiza histórico
             history = history.filter(i => i.id !== id);
             history.unshift({id, title, thumbnail: thumb, channel: artist});
-            if(history.length > 15) history.pop(); // Limite de 15 itens
+            if(history.length > 15) history.pop(); 
             localStorage.setItem('rp_history', JSON.stringify(history));
             
-            // Só renderiza se estiver visível (na home)
-            if(document.getElementById('historySection').className !== "hidden") {
-                renderHistory();
-            }
-            
+            if(document.getElementById('historySection').className !== "hidden") renderHistory();
             openPlayer(id);
         }
 
@@ -288,25 +278,15 @@
                 player.loadVideoById(id);
             } else {
                 player = new YT.Player('ytPlayer', { 
-                    height:'100%', 
-                    width:'100%', 
-                    videoId:id, 
+                    height:'100%', width:'100%', videoId:id, 
                     playerVars:{'autoplay':1, 'rel':0, 'controls':1, 'playsinline': 1}, 
-                    events:{
-                        'onStateChange':(e)=>{
-                            if(e.data===0) playNext();
-                        } 
-                    } 
+                    events:{ 'onStateChange':(e)=>{ if(e.data===0) playNext(); } } 
                 });
             }
             setFull();
         }
 
-        function seekVideo(sec) { 
-            if(player && player.getCurrentTime) {
-                player.seekTo(player.getCurrentTime() + sec, true); 
-            }
-        }
+        function seekVideo(sec) { if(player) player.seekTo(player.getCurrentTime() + sec, true); }
         
         function playNext() { 
             if(currentIndex < videoPool.length-1) { 
@@ -360,12 +340,11 @@
             grid.innerHTML = history.map(v => `
                 <div class="min-w-[140px] cursor-pointer group" onclick="openPlayer('${v.id}')">
                     <div class="relative aspect-square rounded-xl overflow-hidden mb-2 border border-zinc-800">
-                        <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300" loading="lazy">
+                        <img src="${v.thumbnail}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
                     </div>
                     <h4 class="text-[11px] font-bold line-clamp-1 text-zinc-300 group-hover:text-white">${v.title}</h4>
                 </div>
             `).join('');
-            
             document.getElementById('historySection').classList.remove('hidden');
         }
 
@@ -375,9 +354,7 @@
         };
         
         document.getElementById('searchInput').onkeypress = (e) => {
-            if(e.key === 'Enter' && e.target.value.trim()) {
-                realizarPesquisa(e.target.value, true);
-            }
+            if(e.key === 'Enter' && e.target.value.trim()) realizarPesquisa(e.target.value, true);
         };
     </script>
 </body>
