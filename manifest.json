@@ -1,15 +1,16 @@
 {
-  "name": "REDPLAY Pro",
-  "short_name": "REDPLAY",
-  "start_url": "index.html",
+  "name": "RubiTube Pro",
+  "short_name": "RubiTube",
+  "description": "Plataforma de vídeos premium",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#050505",
+  "theme_color": "#9B111E",
   "icons": [
     {
-      "src": "https://uploads.zero-two-apis.com.br/uploads/images/48417970227bd8389b054f1c4823bbf9d4bf0eb3b8965e2e360d0101ca12c7d1.jpg",
+      "src": "https://cdn-icons-png.flaticon.com/512/1384/1384060.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
