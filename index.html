@@ -9,144 +9,129 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
     body { font-family: 'Roboto', sans-serif; }
-    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+    /* Grid otimizado para mobile (mínimo de 240px) */
+    .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    @media (min-width: 768px) { .video-grid { gap: 24px; } }
     .card { transition: all 0.2s; }
     .card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
     .thumbnail-container { position: relative; }
-    .duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.85); color: white; padding: 2px 6px; border-radius: 2px; font-size: 12px; font-weight: 500; }
+    .duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.85); color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: 500; }
     .modal { animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .sidebar-link { transition: background 0.2s; }
     .sidebar-link:hover { background-color: #27272a; }
   </style>
 </head>
-<body class="bg-[#0f0f0f] text-white">
+<body class="bg-[#0f0f0f] text-white overflow-x-hidden">
 
-<div class="flex h-screen overflow-hidden">
+<div class="flex h-screen w-full">
 
-  <!-- SIDEBAR -->
-  <div class="w-64 bg-[#0f0f0f] border-r border-zinc-800 flex flex-col fixed h-full overflow-y-auto">
-    <div class="p-4 flex items-center gap-2 border-b border-zinc-800">
-      <i class="fa-solid fa-gem text-3xl text-red-500"></i>
-      <span class="text-3xl font-bold tracking-tighter text-red-500">RubiTube</span>
+  <div id="mobileOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
+
+  <div id="sidebar" class="w-64 bg-[#0f0f0f] border-r border-zinc-800 flex flex-col fixed h-full overflow-y-auto z-50 transition-transform duration-300 -translate-x-full md:translate-x-0">
+    <div class="p-4 flex items-center gap-4 border-b border-zinc-800">
+      <button onclick="toggleSidebar()" class="md:hidden text-xl"><i class="fa-solid fa-bars"></i></button>
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-gem text-3xl text-red-500"></i>
+        <span class="text-2xl font-bold tracking-tighter text-red-500">RubiTube</span>
+      </div>
     </div>
     
     <div class="flex-1 py-3">
       <a href="#" onclick="searchDefault()" class="sidebar-link flex items-center gap-6 px-6 py-3 text-sm font-medium">
-        <i class="fa-solid fa-house w-6"></i> Início
+        <i class="fa-solid fa-house w-6 text-center"></i> Início
       </a>
       <a href="#" class="sidebar-link flex items-center gap-6 px-6 py-3 text-sm font-medium">
-        <i class="fa-solid fa-compass w-6"></i> Explorar
+        <i class="fa-solid fa-compass w-6 text-center"></i> Explorar
       </a>
       <a href="#" class="sidebar-link flex items-center gap-6 px-6 py-3 text-sm font-medium">
-        <i class="fa-solid fa-bolt w-6"></i> Shorts
+        <i class="fa-solid fa-bolt w-6 text-center"></i> Shorts
       </a>
       <a href="#" class="sidebar-link flex items-center gap-6 px-6 py-3 text-sm font-medium">
-        <i class="fa-solid fa-bell w-6"></i> Inscrições
+        <i class="fa-solid fa-bell w-6 text-center"></i> Inscrições
       </a>
       
       <div class="h-px bg-zinc-800 my-4 mx-6"></div>
       
       <div class="px-6 text-xs font-medium text-zinc-400 mb-2">VOCÊ</div>
       <a href="#" class="sidebar-link flex items-center gap-6 px-6 py-3 text-sm font-medium">
-        <i class="fa-solid fa-clock w-6"></i> Histórico
+        <i class="fa-solid fa-clock w-6 text-center"></i> Histórico
       </a>
       <a href="#" class="sidebar-link flex items-center gap-6 px-6 py-3 text-sm font-medium">
-        <i class="fa-solid fa-thumbs-up w-6"></i> Vídeos que gostei
+        <i class="fa-solid fa-thumbs-up w-6 text-center"></i> Vídeos que gostei
       </a>
-      <a href="#" class="sidebar-link flex items-center gap-6 px-6 py-3 text-sm font-medium">
-        <i class="fa-solid fa-clock-rotate-left w-6"></i> Assistir mais tarde
-      </a>
-    </div>
-    
-    <div class="p-4 border-t border-zinc-800 text-xs text-zinc-500">
-      © 2026 RubiTube Clone<br>
-      Feito com ❤️ usando a API Redzin
     </div>
   </div>
 
-  <!-- MAIN CONTENT -->
-  <div class="flex-1 ml-64 flex flex-col">
+  <div class="flex-1 flex flex-col w-full md:ml-64 transition-all duration-300 h-screen">
 
-    <!-- TOPBAR -->
-    <div class="h-14 bg-[#0f0f0f] border-b border-zinc-800 flex items-center px-6 gap-6 fixed w-full z-50">
-      <!-- Logo mobile -->
-      <div class="lg:hidden flex items-center gap-2">
-        <i class="fa-solid fa-gem text-2xl text-red-500"></i>
-        <span class="text-2xl font-bold text-red-500">Rubi</span>
+    <div class="h-14 bg-[#0f0f0f] border-b border-zinc-800 flex items-center justify-between px-3 sm:px-6 gap-2 sm:gap-6 sticky top-0 z-30">
+      
+      <div class="flex items-center gap-3 md:hidden">
+        <button onclick="toggleSidebar()" class="text-xl p-1"><i class="fa-solid fa-bars"></i></button>
+        <i class="fa-solid fa-gem text-xl text-red-500 hidden sm:block"></i>
       </div>
 
-      <!-- SEARCH -->
       <div class="flex-1 max-w-2xl mx-auto">
-        <form id="searchForm" class="flex">
-          <div class="flex-1 relative">
+        <form id="searchForm" class="flex items-center w-full">
+          <div class="flex-1 relative flex">
             <input id="searchInput" 
                    type="text" 
-                   placeholder="Pesquisar no RubiTube..."
-                   class="w-full bg-zinc-900 border border-zinc-700 focus:border-red-500 outline-none h-10 pl-5 pr-12 rounded-l-full text-sm">
+                   placeholder="Pesquisar..."
+                   class="w-full bg-zinc-900 border border-zinc-700 focus:border-red-500 outline-none h-9 sm:h-10 pl-4 pr-10 rounded-l-full text-sm">
             <button type="submit"
-                    class="absolute right-0 top-0 h-10 w-14 bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 rounded-r-full flex items-center justify-center">
+                    class="h-9 sm:h-10 w-12 sm:w-14 bg-zinc-800 hover:bg-zinc-700 border border-l-0 border-zinc-700 rounded-r-full flex items-center justify-center">
               <i class="fa-solid fa-magnifying-glass"></i>
             </button>
           </div>
           <button type="button" onclick="voiceSearch()" 
-                  class="ml-2 w-10 h-10 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center">
+                  class="ml-2 w-9 h-9 sm:w-10 sm:h-10 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center flex-shrink-0">
             <i class="fa-solid fa-microphone"></i>
           </button>
         </form>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button onclick="uploadClick()" class="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 h-9 rounded-full text-sm font-medium">
-          <i class="fa-solid fa-upload"></i>
-          <span class="hidden md:inline">Enviar</span>
+      <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <button onclick="uploadClick()" class="hidden sm:flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 px-4 h-9 rounded-full text-sm font-medium">
+          <i class="fa-solid fa-plus"></i>
         </button>
-        <button class="w-9 h-9 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center">
-          <i class="fa-solid fa-video"></i>
-        </button>
-        <button class="w-9 h-9 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center relative">
+        <button class="w-8 h-8 sm:w-9 sm:h-9 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center relative">
           <i class="fa-solid fa-bell"></i>
           <span class="absolute -top-1 -right-1 bg-red-500 text-[10px] w-4 h-4 flex items-center justify-center rounded-full">9</span>
         </button>
-        <div class="w-8 h-8 bg-gradient-to-br from-red-500 to-purple-500 rounded-full flex items-center justify-center text-xs font-bold">R</div>
+        <div class="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-red-500 to-purple-500 rounded-full flex items-center justify-center text-xs font-bold">R</div>
       </div>
     </div>
 
-    <!-- CONTENT AREA -->
-    <div class="flex-1 overflow-auto pt-14 pb-8 px-8" id="content">
-      <div id="results" class="video-grid mt-6"></div>
+    <div class="flex-1 overflow-y-auto p-4 sm:p-8" id="content">
+      <div id="results" class="video-grid"></div>
       
-      <!-- Loading -->
-      <div id="loading" class="hidden flex flex-col items-center justify-center h-96">
+      <div id="loading" class="hidden flex-col items-center justify-center h-[60vh]">
         <i class="fa-solid fa-spinner fa-spin text-4xl text-red-500"></i>
         <p class="mt-4 text-zinc-400">Buscando vídeos incríveis...</p>
       </div>
       
-      <!-- Empty state -->
-      <div id="empty" class="hidden flex flex-col items-center justify-center h-96 text-center">
-        <i class="fa-solid fa-search text-6xl text-zinc-600 mb-6"></i>
-        <p class="text-xl text-zinc-400">Nenhum vídeo encontrado</p>
-        <p class="text-zinc-500 mt-2">Tente outra pesquisa</p>
+      <div id="empty" class="hidden flex-col items-center justify-center h-[60vh] text-center">
+        <i class="fa-solid fa-search text-5xl sm:text-6xl text-zinc-600 mb-6"></i>
+        <p class="text-lg sm:text-xl text-zinc-400">Nenhum vídeo encontrado</p>
+        <p class="text-zinc-500 mt-2 text-sm">Tente outra pesquisa</p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- VIDEO PLAYER MODAL -->
-<div id="playerModal" class="modal hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center">
-  <div class="bg-zinc-950 w-full max-w-5xl mx-4 rounded-2xl overflow-hidden">
-    <!-- Header do modal -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+<div id="playerModal" class="modal hidden fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-0 sm:p-4">
+  <div class="bg-zinc-950 w-full h-full sm:h-auto sm:max-w-5xl rounded-none sm:rounded-2xl overflow-hidden flex flex-col">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 flex-shrink-0">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-gem text-red-500"></i>
-        <span class="font-semibold text-lg">RubiTube Player</span>
+        <span class="font-semibold text-base sm:text-lg truncate max-w-[200px] sm:max-w-md" id="modalTitle">RubiTube Player</span>
       </div>
       <button onclick="closePlayer()" 
-              class="text-zinc-400 hover:text-white text-3xl leading-none">×</button>
+              class="text-zinc-400 hover:text-white text-3xl leading-none w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800">&times;</button>
     </div>
     
-    <!-- Player -->
-    <div class="aspect-video bg-black">
+    <div class="w-full aspect-video bg-black flex-1 sm:flex-none">
       <iframe id="youtubePlayer" 
               class="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -160,16 +145,22 @@
 const API_BASE = "https://redzinapi-tech.onrender.com/youtube/search";
 const API_KEY = "REDZ";
 
-// Proxy anti-CORS (sempre funciona)
+// Proxy anti-CORS (Mantido caso a API do Redzin precise, mas geralmente não precisa)
 function getCorsUrl(url) {
   return `https://corsproxy.io/?${encodeURIComponent(url)}`;
 }
 
-// ================== TAILWIND CONFIG ==================
-tailwind.config = {
-  content: [],
-  theme: {
-    extend: {}
+// ================== CONTROLE MOBILE ==================
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobileOverlay');
+  
+  sidebar.classList.toggle('-translate-x-full');
+  
+  if (sidebar.classList.contains('-translate-x-full')) {
+    overlay.classList.add('hidden');
+  } else {
+    overlay.classList.remove('hidden');
   }
 }
 
@@ -181,47 +172,55 @@ function renderVideos(videos) {
   const container = document.getElementById('results');
   container.innerHTML = '';
   
-  if (videos.length === 0) {
+  if (!videos || videos.length === 0) {
     document.getElementById('empty').classList.remove('hidden');
+    document.getElementById('empty').classList.add('flex');
     return;
   }
   
   document.getElementById('empty').classList.add('hidden');
+  document.getElementById('empty').classList.remove('flex');
   
   videos.forEach(video => {
     if (video.type !== "video") return;
     
+    // Tratamento para caso a API retorne propriedades diferentes
+    const thumb = video.image || video.thumbnail || '';
+    const title = video.title || 'Vídeo sem título';
+    const author = (video.author && video.author.name) ? video.author.name : 'Autor Desconhecido';
+    const timestamp = video.timestamp || video.duration || '';
+    const views = formatViews(video.views);
+    
     const card = document.createElement('div');
-    card.className = `card bg-zinc-900 rounded-xl overflow-hidden cursor-pointer`;
+    card.className = `card bg-zinc-900 rounded-xl overflow-hidden cursor-pointer flex flex-col h-full`;
     card.innerHTML = `
       <div class="thumbnail-container">
-        <img src="${video.image || video.thumbnail}" 
-             class="w-full aspect-video object-cover" 
-             alt="${video.title}">
-        <div class="duration">${video.timestamp}</div>
+        <img src="${thumb}" class="w-full aspect-video object-cover" alt="${title}">
+        <div class="duration">${timestamp}</div>
       </div>
-      <div class="p-3">
-        <h3 class="font-medium line-clamp-2 leading-tight text-[15px] mb-3">${video.title}</h3>
-        
-        <div class="flex gap-3">
-          <div class="w-9 h-9 bg-zinc-700 rounded-full flex-shrink-0"></div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm text-zinc-300">${video.author.name}</p>
-            <p class="text-xs text-zinc-500 mt-1">
-              ${formatViews(video.views)} • ${video.ago}
-            </p>
-          </div>
+      <div class="p-3 flex gap-3 flex-1">
+        <div class="w-9 h-9 bg-zinc-800 border border-zinc-700 rounded-full flex-shrink-0 flex items-center justify-center">
+          <i class="fa-solid fa-user text-zinc-500 text-xs"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="font-medium line-clamp-2 leading-tight text-[14px] sm:text-[15px] mb-1 text-zinc-100">${title}</h3>
+          <p class="text-[13px] text-zinc-400 mt-1">${author}</p>
+          <p class="text-[12px] text-zinc-500">
+            ${views} visualizações • ${video.ago || ''}
+          </p>
         </div>
       </div>
     `;
     
-    card.onclick = () => openPlayer(video.videoId, video.title);
+    card.onclick = () => openPlayer(video.videoId || video.id, title);
     container.appendChild(card);
   });
 }
 
 function formatViews(views) {
   if (!views) return "0";
+  // Se a API já mandar formatado como string ("2.5M"), retorna direto
+  if (typeof views === 'string') return views; 
   if (views >= 1000000) return (views / 1000000).toFixed(1) + " mi";
   if (views >= 1000) return Math.floor(views / 1000) + " mil";
   return views;
@@ -229,22 +228,32 @@ function formatViews(views) {
 
 // ================== PLAYER ==================
 function openPlayer(videoId, title) {
+  if (!videoId) {
+    alert("ID do vídeo não encontrado!");
+    return;
+  }
+  
   const modal = document.getElementById('playerModal');
   const iframe = document.getElementById('youtubePlayer');
+  const modalTitle = document.getElementById('modalTitle');
   
-  // Player sem anúncios (o mais próximo possível)
-  iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0&controls=1`;
+  modalTitle.textContent = title;
+  
+  // URL CORRIGIDA DO YOUTUBE
+  iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&modestbranding=1&rel=0`;
   
   modal.classList.remove('hidden');
   modal.classList.add('flex');
+  document.body.style.overflow = 'hidden'; // Evita scroll do fundo no mobile
 }
 
 function closePlayer() {
   const modal = document.getElementById('playerModal');
   const iframe = document.getElementById('youtubePlayer');
-  iframe.src = '';
+  iframe.src = ''; // Para o vídeo
   modal.classList.add('hidden');
   modal.classList.remove('flex');
+  document.body.style.overflow = 'auto'; // Restaura o scroll
 }
 
 // ================== BUSCA ==================
@@ -256,58 +265,64 @@ async function performSearch(query) {
   const empty = document.getElementById('empty');
   
   loading.classList.remove('hidden');
+  loading.classList.add('flex');
   resultsDiv.innerHTML = '';
   empty.classList.add('hidden');
+  empty.classList.remove('flex');
   
   try {
-    const apiUrl = `\( {API_BASE}?query= \){encodeURIComponent(query)}&apikey=${API_KEY}`;
-    const corsUrl = getCorsUrl(apiUrl);
+    // SINTAXE CORRIGIDA ABAIXO
+    const apiUrl = `${API_BASE}?query=${encodeURIComponent(query)}&apikey=${API_KEY}`;
     
-    const res = await fetch(corsUrl);
+    // Tentamos direto primeiro, se der erro de CORS, você pode reativar o getCorsUrl
+    const res = await fetch(apiUrl);
     const data = await res.json();
     
     if (data.status && data.resultado) {
       currentVideos = data.resultado;
       renderVideos(currentVideos);
     } else {
-      document.getElementById('empty').classList.remove('hidden');
+      empty.classList.remove('hidden');
+      empty.classList.add('flex');
     }
   } catch (err) {
-    console.error(err);
-    alert("Erro ao buscar vídeos. Verifique sua conexão ou tente novamente.");
-    document.getElementById('empty').classList.remove('hidden');
+    console.error("Erro na busca:", err);
+    empty.classList.remove('hidden');
+    empty.classList.add('flex');
   } finally {
     loading.classList.add('hidden');
+    loading.classList.remove('flex');
   }
 }
 
-// Busca padrão (igual ao exemplo que você colou)
 function searchDefault() {
   document.getElementById('searchInput').value = "teto";
   performSearch("teto");
+  // Se estiver no mobile, fecha a sidebar ao clicar em Início
+  if (window.innerWidth < 768) toggleSidebar();
 }
 
 // ================== EVENTOS ==================
 document.getElementById('searchForm').addEventListener('submit', function(e) {
   e.preventDefault();
   const query = document.getElementById('searchInput').value.trim();
-  if (query) performSearch(query);
+  if (query) {
+    performSearch(query);
+    document.getElementById('searchInput').blur(); // Fecha o teclado no mobile
+  }
 });
 
 function voiceSearch() {
-  alert("🎤 Busca por voz ativada!\n\n(Em um projeto real, aqui iria o Web Speech API)");
-  // Você pode implementar window.SpeechRecognition se quiser
+  alert("🎤 Busca por voz ativada!");
 }
 
 function uploadClick() {
-  alert("📤 Enviar vídeo\n\nFuncionalidade de upload simulada (clone demo)");
+  alert("📤 Enviar vídeo simulado!");
 }
 
 // ================== INICIALIZAÇÃO ==================
 window.onload = function() {
-  // Mostra exemplo inicial com "teto" (igual ao JSON que você colou)
-  document.getElementById('searchInput').value = "teto";
-  performSearch("teto");
+  searchDefault();
   
   // Fecha modal com ESC
   document.addEventListener('keydown', function(e) {
@@ -316,10 +331,8 @@ window.onload = function() {
       if (!modal.classList.contains('hidden')) closePlayer();
     }
   });
-  
-  console.log('%c✅ RubiTube carregado com proteção anti-CORS!', 'color:#ff0000; font-weight:bold');
 };
 </script>
 
 </body>
-          </html>
+</html>
